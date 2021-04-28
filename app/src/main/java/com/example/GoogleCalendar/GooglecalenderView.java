@@ -1,16 +1,12 @@
 package com.example.GoogleCalendar;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -239,12 +235,12 @@ public class GooglecalenderView extends LinearLayout {
                 if (!mainActivity.isAppBarClosed()) {
                     Log.e("onPageSelected", "Googlecalendaraview");
                     adjustheight();
-                    EventBus.getDefault().post(new MessageEvent(new LocalDate(myPagerAdapter.monthModels.get(position).getYear(), myPagerAdapter.monthModels.get(position).getMonth(), 1)));
+                    EventBus.getDefault().post(new MessageEvent(new LocalDate(myPagerAdapter.getMonthModels().get(position).getYear(), myPagerAdapter.getMonthModels().get(position).getMonth(), 1)));
 
                     updategrid();
 
                     if (monthChangeListner != null)
-                        monthChangeListner.onmonthChange(myPagerAdapter.monthModels.get(position));
+                        monthChangeListner.onmonthChange(myPagerAdapter.getMonthModels().get(position));
                 }
 
             }
@@ -267,7 +263,7 @@ public class GooglecalenderView extends LinearLayout {
         final MonthPagerAdapter myPagerAdapter = (MonthPagerAdapter) viewPager.getAdapter();
         if (myPagerAdapter != null) {
             final int position = viewPager.getCurrentItem();
-            int size = myPagerAdapter.monthModels.get(position).getDayModelArrayList().size() + myPagerAdapter.monthModels.get(position).getFirstday();
+            int size = myPagerAdapter.getMonthModels().get(position).getDayModelArrayList().size() + myPagerAdapter.getMonthModels().get(position).getFirstday();
             int numbercolumn = size % 7 == 0 ? size / 7 : (size / 7) + 1;
             ViewGroup.LayoutParams params = getLayoutParams();
             int setheight = 65 + (context.getResources().getDimensionPixelSize(R.dimen.itemheight) * numbercolumn) + context.getResources().getDimensionPixelSize(R.dimen.tendp) + getStatusBarHeight();
@@ -288,137 +284,5 @@ public class GooglecalenderView extends LinearLayout {
             result = getResources().getDimensionPixelSize(resourceId);
         }
         return result;
-    }
-
-    class MonthPagerAdapter extends RecyclerView.Adapter<MonthPagerAdapter.MonthViewHolder> {
-        private ArrayList<MonthModel> monthModels;
-        private LayoutInflater mInflater;
-        private Context context;
-
-        MonthPagerAdapter(Context context, ArrayList<MonthModel> data) {
-            this.context = context;
-            this.mInflater = LayoutInflater.from(context);
-            this.monthModels = data;
-        }
-
-        @NonNull
-        @Override
-        public MonthViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = mInflater.inflate(R.layout.fraglay, parent, false);
-            return new MonthViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull MonthViewHolder holder, int position) {
-
-            MonthModel monthtemp = monthModels.get(position);
-
-            Dayadapter dayadapter = new Dayadapter(context, monthtemp.getDayModelArrayList(), monthtemp.getFirstday(), monthtemp.getMonth(), monthtemp.getYear());
-            holder.gridview.setAdapter(dayadapter);
-            dayadapter.notifyDataSetChanged();
-
-
-        }
-
-        @Override
-        public int getItemCount() {
-            return monthModels.size();
-        }
-
-        class MonthViewHolder extends RecyclerView.ViewHolder {
-
-            RecyclerView gridview;
-
-            MonthViewHolder(View itemView) {
-                super(itemView);
-                gridview = itemView.findViewById(R.id.recyclerview);
-            }
-        }
-    }
-
-    class Dayadapter extends RecyclerView.Adapter<Dayadapter.DayViewHolder> {
-        private ArrayList<DayModel> dayModels;
-        private LayoutInflater mInflater;
-        private int firstday;
-        private int month, year;
-
-        public Dayadapter(Context context, ArrayList<DayModel> dayModels, int firstday, int month, int year) {
-            this.mInflater = LayoutInflater.from(context);
-            this.dayModels = dayModels;
-            this.firstday = firstday;
-            this.month = month;
-            this.year = year;
-        }
-
-        @Override
-        public Dayadapter.DayViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = mInflater.inflate(R.layout.gridlay, parent, false);
-            return new Dayadapter.DayViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(Dayadapter.DayViewHolder holder, int position) {
-
-            if (position >= firstday) {
-                position = position - firstday;
-                DayModel dayModel = dayModels.get(position);
-                boolean selected = dayModel.getDay() == MainActivity.lastdate.getDayOfMonth() && dayModel.getMonth() == MainActivity.lastdate.getMonthOfYear() && dayModel.getYear() == MainActivity.lastdate.getYear() ? true : false;
-
-                if (dayModel.isToday()) {
-                    holder.textView.setBackgroundResource(R.drawable.circle);
-                    holder.textView.setTextColor(Color.WHITE);
-
-                } else if (selected) {
-                    holder.textView.setBackgroundResource(R.drawable.selectedback);
-                    holder.textView.setTextColor(Color.rgb(91, 128, 231));
-
-                } else {
-                    holder.textView.setBackgroundColor(Color.TRANSPARENT);
-                    holder.textView.setTextColor(Color.rgb(80, 80, 80));
-                }
-                holder.textView.setText(dayModels.get(position).getDay() + "");
-
-                if (dayModel.getEventlist() && !selected) {
-                    holder.eventview.setVisibility(View.VISIBLE);
-                } else {
-                    holder.eventview.setVisibility(View.GONE);
-                }
-            } else {
-                holder.textView.setBackgroundColor(Color.TRANSPARENT);
-                holder.textView.setText("");
-                holder.eventview.setVisibility(View.GONE);
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            return dayModels.size() + firstday;
-        }
-
-        class DayViewHolder extends RecyclerView.ViewHolder {
-
-            private TextView textView;
-            private View eventview;
-
-            public DayViewHolder(View itemView) {
-                super(itemView);
-                textView = itemView.findViewById(R.id.textView8);
-                eventview = itemView.findViewById(R.id.eventview);
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (getAdapterPosition() >= firstday) {
-                            for (DayModel dayModel : dayModels) {
-                                dayModel.setSelected(false);
-                            }
-                            MainActivity.lastdate = new LocalDate(year, month, dayModels.get(getAdapterPosition() - firstday).getDay());
-                            EventBus.getDefault().post(new MessageEvent(new LocalDate(year, month, dayModels.get(getAdapterPosition() - firstday).getDay())));
-                            notifyDataSetChanged();
-                        }
-
-                    }
-                });
-            }
-        }
     }
 }
