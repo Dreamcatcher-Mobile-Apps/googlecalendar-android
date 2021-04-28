@@ -8,16 +8,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import org.joda.time.LocalDate;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import org.joda.time.LocalDate;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -25,9 +25,14 @@ import java.util.HashMap;
  * create an instance of this fragment.
  */
 public class MonthFragment extends Fragment {
+    private String title;
     private ArrayList<DayModel> dayModels;
+    private RecyclerView gridView;
+    private int firstday;
+    private int month, year;
     private int singleitemheight;
     private int index;
+
 
     public MonthFragment() {
         // Required empty public constructor
@@ -99,6 +104,9 @@ public class MonthFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        firstday = getArguments().getInt("firstday");
+        month = getArguments().getInt("month");
+        year = getArguments().getInt("year");
         index = getArguments().getInt("index", -1);
         singleitemheight = getArguments().getInt("singleitemheight");
     }
@@ -118,14 +126,30 @@ public class MonthFragment extends Fragment {
                 textView.setTextColor(getResources().getColor(R.color.unselectday));
             }
         }
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 7) {};
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 7) {
+
+//            @Override
+//            public boolean canScrollVertically() {
+//                return false;
+//
+//            }
+//
+//            @Override
+//            public boolean canScrollHorizontally() {
+//                return false;
+//            }
+        };
         gridView.setLayoutManager(gridLayoutManager);
         MiddleDividerItemDecoration vertecoration = new MiddleDividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL);
+        //vertecoration.setDrawable(new ColorDrawable(Color.LTGRAY));
         MiddleDividerItemDecoration hortdecoration = new MiddleDividerItemDecoration(getActivity(), DividerItemDecoration.HORIZONTAL);
+        // hortdecoration.setDrawable(new ColorDrawable(Color.LTGRAY));
         gridView.addItemDecoration(vertecoration);
         gridView.addItemDecoration(hortdecoration);
+
         gridView.setAdapter(new Myadapter());
         return view;
+
     }
 
     class Myadapter extends RecyclerView.Adapter<Myadapter.MonthViewHolder> {
@@ -144,10 +168,14 @@ public class MonthFragment extends Fragment {
             layoutParams.height = singleitemheight;
             view.setLayoutParams(layoutParams);
             return new MonthViewHolder(view);
+
         }
+
 
         @Override
         public void onBindViewHolder(MonthViewHolder holder, int position) {
+
+
             holder.textView.setText(dayModels.get(position).getDay() + "");
             if (dayModels.get(position).isToday()) {
                 holder.textView.setBackgroundResource(R.drawable.smallcircle);
@@ -158,8 +186,9 @@ public class MonthFragment extends Fragment {
             } else {
                 holder.textView.setBackgroundColor(Color.TRANSPARENT);
                 holder.textView.setTextColor(getResources().getColor(R.color.lightblack));
-            }
 
+            }
+            DayModel dayModeltemp = dayModels.get(position);
             String names[] = dayModels.get(position).getEvents();
             if (names != null) {
                 if (names.length == 1) {
@@ -173,6 +202,7 @@ public class MonthFragment extends Fragment {
                     holder.event2.setVisibility(View.VISIBLE);
                     holder.event3.setVisibility(View.GONE);
                     holder.event3.setText("");
+
                 } else {
                     holder.event1.setVisibility(View.VISIBLE);
                     holder.event2.setVisibility(View.VISIBLE);
@@ -182,16 +212,21 @@ public class MonthFragment extends Fragment {
                     if (i == 0) holder.event1.setText(names[0]);
                     else if (i == 1) holder.event2.setText(names[1]);
                     else holder.event3.setText(names[2]);
+
                 }
             } else {
                 holder.event1.setVisibility(View.GONE);
                 holder.event2.setVisibility(View.GONE);
                 holder.event3.setVisibility(View.GONE);
+
             }
+
+
         }
 
         @Override
         public int getItemCount() {
+
             return 42;
         }
 
@@ -202,6 +237,7 @@ public class MonthFragment extends Fragment {
         }
 
         class MonthViewHolder extends RecyclerView.ViewHolder {
+
             private TextView textView;
             private TextView event1;
             private TextView event2;
@@ -216,13 +252,16 @@ public class MonthFragment extends Fragment {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+
                         MainActivity mainActivity = (MainActivity) getActivity();
                         if (mainActivity != null) {
                             DayModel dayModel = dayModels.get(getAdapterPosition());
+
                             mainActivity.selectdateFromMonthPager(dayModel.getYear(), dayModel.getMonth(), dayModel.getDay());
                         }
                     }
                 });
+
             }
         }
     }
