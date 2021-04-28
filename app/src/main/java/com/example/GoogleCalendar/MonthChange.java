@@ -11,10 +11,6 @@ public class MonthChange {
         mdy = dy;
     }
 
-    public int getMdy() {
-        return mdy;
-    }
-
     public LocalDate getMessage() {
         return mMessage;
     }
