@@ -5,9 +5,12 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class MyRecycle extends RecyclerView {
+    private LinearLayoutManager linearLayoutManager;
+    private AppBarTracking appBarTracking;
 
     public MyRecycle(Context context) {
         super(context);
@@ -24,6 +27,11 @@ public class MyRecycle extends RecyclerView {
     @Override
     public void setLayoutManager(LayoutManager layout) {
         super.setLayoutManager(layout);
+        linearLayoutManager = (LinearLayoutManager) layout;
+    }
+
+    public void setAppbartrackListner(AppBarTracking appbarListner) {
+        appBarTracking = appbarListner;
     }
 
     @Override
@@ -34,11 +42,19 @@ public class MyRecycle extends RecyclerView {
 
     @Override
     public boolean fling(int velocityX, int velocityY) {
+
         return super.fling(velocityX, velocityY);
+
     }
 
     @Override
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
         super.onNestedScroll(target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed);
+    }
+
+    interface AppBarTracking {
+        boolean isAppBarIdle();
+
+        boolean isAppBarExpanded();
     }
 }
