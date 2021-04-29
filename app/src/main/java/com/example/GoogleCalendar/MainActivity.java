@@ -1,12 +1,8 @@
 package com.example.GoogleCalendar;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,9 +17,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -66,7 +62,6 @@ public class MainActivity extends AppCompatActivity
     private int mAppBarOffset = 0;
     private boolean mAppBarIdle = true;
     private int mAppBarMaxOffset = 0;
-    private View shadow;
     private AppBarLayout mAppBar;
     private boolean mIsExpanded = false;
     private View redlay;
@@ -77,16 +72,12 @@ public class MainActivity extends AppCompatActivity
     private boolean isappbarclosed = true;
     private int month;
     private int expandedfirst;
-    private View roundrect;
-    private TextView eventnametextview, eventrangetextview, holidaytextview;
-    private ImageView calendaricon;
-    private View eventview, fullview;
     private GooglecalenderView calendarView;
     private ArrayList<EventModel> eventalllist;
     private HashMap<LocalDate, Integer> indextrack;
-    private ImageButton closebtn;
     private HashMap<LocalDate, Integer> dupindextrack;
     private String[] var = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN",};
+    private Toast mostRecentToastMessage;
     private int[] monthresource = {
             R.drawable.bkg_01_jan,
             R.drawable.bkg_02_feb,
@@ -161,74 +152,8 @@ public class MainActivity extends AppCompatActivity
         return 0;
     }
 
-    public void closebtnClick() {
-        closebtn.setVisibility(View.GONE);
-        eventnametextview.setVisibility(View.GONE);
-        roundrect.setVisibility(View.GONE);
-        eventrangetextview.setVisibility(View.GONE);
-        calendaricon.setVisibility(View.GONE);
-        holidaytextview.setVisibility(View.GONE);
-        ValueAnimator animwidth = ValueAnimator.ofInt(getDevicewidth(), eventview.getWidth());
-        animwidth.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                int val = (Integer) valueAnimator.getAnimatedValue();
-                ViewGroup.LayoutParams layoutParams = redlay.getLayoutParams();
-                layoutParams.width = val;
-                redlay.setLayoutParams(layoutParams);
-            }
-        });
-        animwidth.setDuration(300);
-
-        ValueAnimator animheight = ValueAnimator.ofInt(getDeviceHeight(), 0);
-        animheight.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-
-                int val = (Integer) valueAnimator.getAnimatedValue();
-                ViewGroup.LayoutParams layoutParams = redlay.getLayoutParams();
-                layoutParams.height = val;
-                redlay.setLayoutParams(layoutParams);
-                if (redlay.getTranslationZ() != 0 && valueAnimator.getAnimatedFraction() > 0.7) {
-                    redlay.setBackgroundResource(R.drawable.white_touch);
-                    redlay.setTranslationZ(0);
-                    shadow.setVisibility(View.GONE);
-                }
-            }
-        });
-        animheight.setDuration(300);
-
-        ValueAnimator animx = ValueAnimator.ofFloat(0, eventview.getLeft());
-        animx.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-
-                Float val = (Float) valueAnimator.getAnimatedValue();
-
-                redlay.setTranslationX(val);
-            }
-        });
-        animx.setDuration(300);
-
-        ValueAnimator animy = ValueAnimator.ofFloat(0, fullview.getTop() + toolbar.getHeight());
-
-        animy.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                Float val = (Float) valueAnimator.getAnimatedValue();
-                redlay.setTranslationY(val);
-            }
-        });
-        animy.setDuration(300);
-        animwidth.start();
-        animheight.start();
-        animy.start();
-        animx.start();
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -240,19 +165,6 @@ public class MainActivity extends AppCompatActivity
         redlay = findViewById(R.id.redlay);
         redlay.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        shadow = findViewById(R.id.shadow);
-        closebtn = findViewById(R.id.closebtn);
-        closebtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View vh) {
-                closebtnClick();
-            }
-        });
-        roundrect = findViewById(R.id.roundrect);
-        eventnametextview = findViewById(R.id.textView12);
-        eventrangetextview = findViewById(R.id.textView13);
-        calendaricon = findViewById(R.id.imageView2);
-        holidaytextview = findViewById(R.id.textView14);
         calendarView = findViewById(R.id.calander);
         calendarView.setPadding(0, getStatusBarHeight(), 0, 0);
         mNestedView = findViewById(R.id.nestedView);
@@ -626,19 +538,9 @@ public class MainActivity extends AppCompatActivity
         return height1;
     }
 
-    private int getDevicewidth() {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int width = displayMetrics.widthPixels;
-        return width;
-    }
-
     @Override
     public void onBackPressed() {
-        if (closebtn.getVisibility() == View.VISIBLE) {
-            closebtnClick();
-
-        } else if (mIsExpanded) {
+        if (mIsExpanded) {
             mIsExpanded = false;
             mNestedView.stopScroll();
             mAppBar.setExpanded(false, true);
@@ -742,7 +644,6 @@ public class MainActivity extends AppCompatActivity
         ((MyAppBarBehavior) layoutParams.getBehavior()).setScrollBehavior(true);
         mAppBar.setElevation(20);
         mArrowImageView.setVisibility(View.VISIBLE);
-
     }
 
     @Override
@@ -950,113 +851,20 @@ public class MainActivity extends AppCompatActivity
                 eventtextview.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(final View v) {
-                        if (isAppBarExpanded()) {
-                            mIsExpanded = !mIsExpanded;
-                            mNestedView.stopScroll();
 
-                            mAppBar.setExpanded(mIsExpanded, true);
-                            return;
-                        }
-                        eventnametextview.setText(eventalllist.get(getAdapterPosition()).getEventname());
+
                         LocalDate localDate = eventalllist.get(getAdapterPosition()).getLocalDate();
-                        LocalDate todaydate = LocalDate.now();
-                        LocalDate nextday = localDate.plusDays(1);
-                        if (localDate.getYear() == todaydate.getYear()) {
-                            String rangetext = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM") + " - " + daysList[nextday.getDayOfWeek()] + ", " + nextday.toString("d MMM");
-                            eventrangetextview.setText(rangetext);
-                        } else {
-                            String rangetext = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM, YYYY") + " - " + daysList[nextday.getDayOfWeek()] + ", " + nextday.toString("d MMM, YYYY");
-                            eventrangetextview.setText(rangetext);
+                        String title = eventalllist.get(getAdapterPosition()).getEventname();
+                        String date = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM");
+//                        String startingTime = eventalllist.get(getAdapterPosition()).getLocalDate();
+//                        String endingTime = "";
+                        String toastText = title + "\n" + date;
+                        if (mostRecentToastMessage != null) {
+                            mostRecentToastMessage.cancel();
                         }
-                        closebtn.setVisibility(View.GONE);
-                        eventnametextview.setVisibility(View.GONE);
-                        roundrect.setVisibility(View.GONE);
-                        eventrangetextview.setVisibility(View.GONE);
-                        calendaricon.setVisibility(View.GONE);
-                        holidaytextview.setVisibility(View.GONE);
-                        final View view = mNestedView.getLayoutManager().findViewByPosition(getAdapterPosition());
-                        ViewGroup.LayoutParams layoutParams = redlay.getLayoutParams();
-                        layoutParams.height = v.getHeight();
-                        layoutParams.width = v.getWidth();
-                        redlay.setLayoutParams(layoutParams);
-                        redlay.setTranslationX(v.getLeft());
-                        redlay.setTranslationY(view.getTop() + toolbar.getHeight());
-                        redlay.setBackgroundResource(R.drawable.white_touch);
-                        redlay.setTranslationZ(0);
+                        mostRecentToastMessage = Toast.makeText(MainActivity.this, toastText, Toast.LENGTH_SHORT);
+                        mostRecentToastMessage.show();
 
-                        ValueAnimator animwidth = ValueAnimator.ofInt(redlay.getWidth(), getDevicewidth());
-                        animwidth.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                            @Override
-                            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                                int val = (Integer) valueAnimator.getAnimatedValue();
-                                ViewGroup.LayoutParams layoutParams = redlay.getLayoutParams();
-                                layoutParams.width = val;
-                                redlay.setLayoutParams(layoutParams);
-                            }
-                        });
-                        animwidth.setDuration(300);
-
-                        ValueAnimator animheight = ValueAnimator.ofInt(redlay.getHeight(), getDeviceHeight());
-                        animheight.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                            @Override
-                            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                                int val = (Integer) valueAnimator.getAnimatedValue();
-                                ViewGroup.LayoutParams layoutParams = redlay.getLayoutParams();
-                                layoutParams.height = val;
-                                redlay.setLayoutParams(layoutParams);
-                                if (redlay.getTranslationZ() == 0 && valueAnimator.getAnimatedFraction() > 0.15) {
-                                    redlay.setBackgroundColor(Color.WHITE);
-                                    shadow.setVisibility(View.VISIBLE);
-                                    redlay.setTranslationZ(getResources().getDimensionPixelSize(R.dimen.tendp));
-                                }
-                            }
-                        });
-                        animheight.setDuration(300);
-
-                        ValueAnimator animx = ValueAnimator.ofFloat(redlay.getTranslationX(), 0);
-                        animx.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                            @Override
-                            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                                Float val = (Float) valueAnimator.getAnimatedValue();
-                                redlay.setTranslationX(val);
-                            }
-                        });
-                        animx.setDuration(300);
-
-                        ValueAnimator animy = ValueAnimator.ofFloat(redlay.getTranslationY(), 0);
-                        animy.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                            @Override
-                            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                                Float val = (Float) valueAnimator.getAnimatedValue();
-                                redlay.setTranslationY(val);
-                            }
-                        });
-                        animy.setDuration(300);
-
-                        animheight.addListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                super.onAnimationEnd(animation);
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        closebtn.setVisibility(View.VISIBLE);
-                                        eventnametextview.setVisibility(View.VISIBLE);
-                                        roundrect.setVisibility(View.VISIBLE);
-                                        eventrangetextview.setVisibility(View.VISIBLE);
-                                        calendaricon.setVisibility(View.VISIBLE);
-                                        holidaytextview.setVisibility(View.VISIBLE);
-                                    }
-                                }, 150);
-
-                            }
-                        });
-                        animwidth.start();
-                        animheight.start();
-                        animy.start();
-                        animx.start();
-                        eventview = v;
-                        fullview = view;
 
                     }
                 });
