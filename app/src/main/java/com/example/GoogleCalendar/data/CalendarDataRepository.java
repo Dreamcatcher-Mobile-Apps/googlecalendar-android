@@ -5,23 +5,25 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.CalendarContract;
-import android.util.Log;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 import java.util.Arrays;
 import java.util.HashMap;
 
 import androidx.core.app.ActivityCompat;
 
+import com.example.GoogleCalendar.models.EventDataModel;
+
 
 public class CalendarDataRepository {
 
-    public static HashMap<LocalDate, String[]> readCalendarEventsData(Context context, LocalDate mintime, LocalDate maxtime) {
+    public static HashMap<LocalDate, EventDataModel[]> readCalendarEventsData(Context context, LocalDate mintime, LocalDate maxtime) {
 
-        HashMap<LocalDate, String[]> localDateHashMap = new HashMap<>();
+        HashMap<LocalDate, EventDataModel[]> localDateHashMap = new HashMap<>();
 
         String selection = "(( " + CalendarContract.Events.DTSTART + " >= " + mintime.toDateTimeAtStartOfDay().getMillis() + " ) AND ( " + CalendarContract.Events.DTSTART + " <= " + maxtime.toDateTimeAtStartOfDay().getMillis() + " ))";
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
@@ -43,8 +45,6 @@ public class CalendarDataRepository {
                         null, null);
 
         cursor.moveToFirst();
-        // fetching calendars name
-        String CNames[] = new String[cursor.getCount()];
 
         // fetching calendars id
         String syncacc = null;
@@ -54,25 +54,39 @@ public class CalendarDataRepository {
             if (cursor.getString(6).equals(syncacc)) {
                 LocalDate localDate = getDate(Long.parseLong(cursor.getString(3)));
                 if (!localDateHashMap.containsKey(localDate)) {
-                    Log.e("location", cursor.getString(5) + "f");
-                    localDateHashMap.put(localDate, new String[]{cursor.getString(1)});
-                } else {
-                    String[] s = localDateHashMap.get(localDate);
-                    boolean isneed = true;
-                    for (int i = 0; i < s.length; i++) {
-                        if (s[i].equals(cursor.getString(1))) {
 
+                    // Fetch data of events per particular date, and add it to localDateHashMap.
+                    String[] eventsNames = new String[]{cursor.getString(1)};
+                    String[] eventsStartDateTimes = new String[]{cursor.getString(3)};
+                    String[] eventsEndDateTimes = new String[]{cursor.getString(4)};
+                    EventDataModel[] eventsPerThisDate = new EventDataModel[eventsNames.length];
+                    for (int i = 0; i < eventsNames.length; i++) {
+                        eventsPerThisDate[i] = new EventDataModel(
+                                eventsNames[i],
+                                getDateTime(Long.parseLong(eventsStartDateTimes[i])),
+                                getDateTime(Long.parseLong(eventsEndDateTimes[i]))
+                        );
+                    }
+                    localDateHashMap.put(localDate, eventsPerThisDate);
+                } else {
+                    EventDataModel[] eventsPerThisDate = localDateHashMap.get(localDate);
+                    boolean isneed = true;
+                    for (int i = 0; i < eventsPerThisDate.length; i++) {
+                        if (eventsPerThisDate[i].getEventName().equals(cursor.getString(1))) {
                             isneed = false;
                             break;
                         }
                     }
                     if (isneed) {
-                        String ss[] = Arrays.copyOf(s, s.length + 1);
-                        ss[ss.length - 1] = cursor.getString(1);
-                        Log.e("location", cursor.getString(5) + "f");
-                        localDateHashMap.put(localDate, ss);
+                        EventDataModel[] eventsPerThisDateNew = Arrays.copyOf(eventsPerThisDate, eventsPerThisDate.length + 1);
+                        EventDataModel newEvent = new EventDataModel(
+                                cursor.getString(1),
+                                getDateTime(Long.parseLong(cursor.getString(3))),
+                                getDateTime(Long.parseLong(cursor.getString(4)))
+                        );
+                        eventsPerThisDateNew[eventsPerThisDateNew.length - 1] = newEvent;
+                        localDateHashMap.put(localDate, eventsPerThisDateNew);
                     }
-
                 }
             }
         }
@@ -80,9 +94,12 @@ public class CalendarDataRepository {
     }
 
     private static LocalDate getDate(long milliSeconds) {
-        Instant instantFromEpochMilli
-                = Instant.ofEpochMilli(milliSeconds);
+        Instant instantFromEpochMilli = Instant.ofEpochMilli(milliSeconds);
         return instantFromEpochMilli.toDateTime(DateTimeZone.getDefault()).toLocalDate();
+    }
 
+    private static LocalDateTime getDateTime(long milliSeconds) {
+        Instant instantFromEpochMilli = Instant.ofEpochMilli(milliSeconds);
+        return instantFromEpochMilli.toDateTime(DateTimeZone.getDefault()).toLocalDateTime();
     }
 }

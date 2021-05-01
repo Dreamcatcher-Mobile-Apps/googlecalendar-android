@@ -5,7 +5,7 @@ public class DayModel {
     private int day;
     private int year;
     private boolean today;
-    private String[] events;
+    private EventDataModel[] events;
 
     private boolean selected;
     private boolean eventlist;
@@ -19,11 +19,11 @@ public class DayModel {
         this.eventlist = event;
     }
 
-    public String[] getEvents() {
+    public EventDataModel[] getEvents() {
         return events;
     }
 
-    public void setEvents(String[] events) {
+    public void setEvents(EventDataModel[] events) {
         this.events = events;
     }
 

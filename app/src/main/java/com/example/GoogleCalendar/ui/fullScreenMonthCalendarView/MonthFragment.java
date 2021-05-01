@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.GoogleCalendar.R;
 import com.example.GoogleCalendar.models.DayModel;
+import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.ui.fullScreenMonthCalendarView.adapters.MyAdapter;
 
 import org.joda.time.LocalDate;
@@ -36,7 +37,7 @@ public class MonthFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static MonthFragment newInstance(int month, int year, int page, ArrayList<DayModel> dayModels, HashMap<LocalDate, String[]> alleventlist, int singleitemheight) {
+    public static MonthFragment newInstance(int month, int year, int page, ArrayList<DayModel> dayModels, HashMap<LocalDate, EventDataModel[]> alleventlist, int singleitemheight) {
         MonthFragment fragmentFirst = new MonthFragment();
         Bundle args = new Bundle();
         args.putInt("singleitemheight", singleitemheight);

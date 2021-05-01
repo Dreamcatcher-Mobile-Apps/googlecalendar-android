@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.GoogleCalendar.R;
 import com.example.GoogleCalendar.models.DayModel;
+import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.ui.MainActivity;
 
 import java.util.ArrayList;
@@ -56,15 +57,15 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MonthViewHolder> {
             holder.textView.setTextColor(activity.getResources().getColor(R.color.lightblack));
         }
 
-        String names[] = dayModels.get(position).getEvents();
-        if (names != null) {
-            if (names.length == 1) {
+        EventDataModel events[] = dayModels.get(position).getEvents();
+        if (events != null) {
+            if (events.length == 1) {
                 holder.event1.setVisibility(View.VISIBLE);
                 holder.event2.setVisibility(View.GONE);
                 holder.event3.setVisibility(View.GONE);
                 holder.event2.setText("");
                 holder.event3.setText("");
-            } else if (names.length == 2) {
+            } else if (events.length == 2) {
                 holder.event1.setVisibility(View.VISIBLE);
                 holder.event2.setVisibility(View.VISIBLE);
                 holder.event3.setVisibility(View.GONE);
@@ -75,9 +76,9 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MonthViewHolder> {
                 holder.event3.setVisibility(View.VISIBLE);
             }
             for (int i = 0; i < dayModels.get(position).getEvents().length; i++) {
-                if (i == 0) holder.event1.setText(names[0]);
-                else if (i == 1) holder.event2.setText(names[1]);
-                else holder.event3.setText(names[2]);
+                if (i == 0) holder.event1.setText(events[0].getEventName());
+                else if (i == 1) holder.event2.setText(events[1].getEventName());
+                else holder.event3.setText(events[2].getEventName());
             }
         } else {
             holder.event1.setVisibility(View.GONE);

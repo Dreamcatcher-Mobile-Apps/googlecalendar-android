@@ -35,11 +35,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.example.GoogleCalendar.common.Converters;
 import com.example.GoogleCalendar.interfaces.MonthChangeListener;
 import com.example.GoogleCalendar.common.MyAppBarBehavior;
 import com.example.GoogleCalendar.R;
 import com.example.GoogleCalendar.data.CalendarDataRepository;
 import com.example.GoogleCalendar.models.AddEvent;
+import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.models.EventModel;
 import com.example.GoogleCalendar.models.MessageEvent;
 import com.example.GoogleCalendar.models.MonthChange;
@@ -58,18 +60,18 @@ import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements MyRecyclerView.AppBarTracking {
 
-    private static final String TAG = "MainActivity";
     public static LocalDate lastdate = LocalDate.now();
     public static int topspace = 0;
     long lasttime;
     private MyRecyclerView mNestedView;
     private ViewPager monthviewpager;
-    private HashMap<LocalDate, String[]> alleventlist;
+    private HashMap<LocalDate, EventDataModel[]> alleventlist;
     private int mAppBarOffset = 0;
     private boolean mAppBarIdle = true;
     private int mAppBarMaxOffset = 0;
@@ -139,7 +141,8 @@ public class MainActivity extends AppCompatActivity
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
             alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            calendarView.init(alleventlist, mintime, maxtime);
+            HashMap<LocalDate, String[]> calendarViewEventList = Converters.Companion.convertEventsDataMapToEventTitlesMap(alleventlist);
+            calendarView.init(calendarViewEventList, mintime, maxtime);
         }
 
         return super.onOptionsItemSelected(item);
@@ -245,7 +248,8 @@ public class MainActivity extends AppCompatActivity
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
             alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            calendarView.init(alleventlist, mintime, maxtime);
+            HashMap<LocalDate, String[]> calendarViewEventList = Converters.Companion.convertEventsDataMapToEventTitlesMap(alleventlist);
+            calendarView.init(calendarViewEventList, mintime, maxtime);
             calendarView.setCurrentmonth(new LocalDate());
             calendarView.adjustheight();
             mIsExpanded = false;
@@ -393,7 +397,8 @@ public class MainActivity extends AppCompatActivity
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
             alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            calendarView.init(alleventlist, mintime.minusYears(10), maxtime.plusYears(10));
+            HashMap<LocalDate, String[]> calendarViewEventList = Converters.Companion.convertEventsDataMapToEventTitlesMap(alleventlist);
+            calendarView.init(calendarViewEventList, mintime.minusYears(10), maxtime.plusYears(10));
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -867,8 +872,10 @@ public class MainActivity extends AppCompatActivity
                         LocalDate localDate = eventalllist.get(getAdapterPosition()).getLocalDate();
                         String title = eventalllist.get(getAdapterPosition()).getEventname();
                         String date = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM");
-//                        String startingTime = eventalllist.get(getAdapterPosition()).getLocalDate();
+
+//                        String startingTime = eventalllist.get(getAdapterPosition());
 //                        String endingTime = "";
+
                         String toastText = title + "\n" + date;
                         if (mostRecentToastMessage != null) {
                             mostRecentToastMessage.cancel();
