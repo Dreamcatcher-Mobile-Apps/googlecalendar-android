@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.models;
 
 import org.joda.time.LocalDate;
 
@@ -23,16 +23,8 @@ public class EventModel implements Comparable<EventModel> {
         return localDate;
     }
 
-    public void setLocalDate(LocalDate localDate) {
-        this.localDate = localDate;
-    }
-
     public String getEventname() {
         return eventname;
-    }
-
-    public void setEventname(String eventname) {
-        this.eventname = eventname;
     }
 
     @Override

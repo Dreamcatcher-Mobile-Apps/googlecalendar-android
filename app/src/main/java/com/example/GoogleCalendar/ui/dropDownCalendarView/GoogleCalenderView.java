@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.ui.dropDownCalendarView;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -10,6 +10,16 @@ import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
+
+import com.example.GoogleCalendar.models.AddEvent;
+import com.example.GoogleCalendar.models.DayModel;
+import com.example.GoogleCalendar.models.EventModel;
+import com.example.GoogleCalendar.ui.MainActivity;
+import com.example.GoogleCalendar.models.MessageEvent;
+import com.example.GoogleCalendar.interfaces.MonthChangeListener;
+import com.example.GoogleCalendar.models.MonthModel;
+import com.example.GoogleCalendar.R;
+import com.example.GoogleCalendar.ui.dropDownCalendarView.adapters.MonthPagerAdapter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.joda.time.DateTime;
@@ -24,34 +34,34 @@ import java.util.Map;
 import java.util.TreeMap;
 
 
-public class GooglecalenderView extends LinearLayout {
+public class GoogleCalenderView extends LinearLayout {
     private Context context;
     private ViewPager2 viewPager;
-    private MonthChangeListner monthChangeListner;
+    private MonthChangeListener monthChangeListener;
     private int currentmonth = 0;
     private LocalDate mindate, maxdate;
     private HashMap<LocalDate, String[]> eventuser = new HashMap<>();
 
-    public GooglecalenderView(Context context) {
+    public GoogleCalenderView(Context context) {
         super(context);
         LayoutInflater.from(context).inflate(R.layout.viewpagerlay, this);
         this.context = context;
     }
 
-    public GooglecalenderView(Context context, @Nullable AttributeSet attrs) {
+    public GoogleCalenderView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         LayoutInflater.from(context).inflate(R.layout.viewpagerlay, this);
         this.context = context;
     }
 
-    public GooglecalenderView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public GoogleCalenderView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         LayoutInflater.from(context).inflate(R.layout.viewpagerlay, this);
         this.context = context;
     }
 
-    public void setMonthChangeListner(MonthChangeListner monthChangeListner) {
-        this.monthChangeListner = monthChangeListner;
+    public void setMonthChangeListener(MonthChangeListener monthChangeListener) {
+        this.monthChangeListener = monthChangeListener;
     }
 
     public int calculateCurrentMonth(LocalDate currentmonthda) {
@@ -239,8 +249,8 @@ public class GooglecalenderView extends LinearLayout {
 
                     updategrid();
 
-                    if (monthChangeListner != null)
-                        monthChangeListner.onmonthChange(myPagerAdapter.getMonthModels().get(position));
+                    if (monthChangeListener != null)
+                        monthChangeListener.onMonthChange(myPagerAdapter.getMonthModels().get(position));
                 }
 
             }
@@ -253,8 +263,8 @@ public class GooglecalenderView extends LinearLayout {
             final int position = viewPager.getCurrentItem();
             RecyclerView recyclerView = (RecyclerView) viewPager.getChildAt(0);
             MonthPagerAdapter.MonthViewHolder monthViewHolder = (MonthPagerAdapter.MonthViewHolder) recyclerView.findViewHolderForAdapterPosition(position);
-            if (monthViewHolder != null && monthViewHolder.gridview != null && monthViewHolder.gridview.getAdapter() != null) {
-                monthViewHolder.gridview.getAdapter().notifyDataSetChanged();
+            if (monthViewHolder != null && monthViewHolder.getGridview() != null && monthViewHolder.getGridview().getAdapter() != null) {
+                monthViewHolder.getGridview().getAdapter().notifyDataSetChanged();
             }
         }
     }

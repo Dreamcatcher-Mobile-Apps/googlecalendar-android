@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.models;
 
 import org.joda.time.LocalDate;
 

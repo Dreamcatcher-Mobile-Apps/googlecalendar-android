@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;/*
+package com.example.GoogleCalendar.ui.fullScreenMonthCalendarView;/*
  * Copyright 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,9 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.GoogleCalendar.R;
 
 
 /**
@@ -142,15 +143,6 @@ public class MiddleDividerItemDecoration extends RecyclerView.ItemDecoration {
             right = parent.getWidth();
         }
 
-        int childCount = parent.getChildCount();
-
-        if (parent.getLayoutManager() instanceof GridLayoutManager) {
-            int leftItems = childCount % ((GridLayoutManager) parent.getLayoutManager()).getSpanCount();
-            if (leftItems == 0) {
-                leftItems = ((GridLayoutManager) parent.getLayoutManager()).getSpanCount();
-            }
-        }
-
         for (int i = 0; i < 6; i++) {
             View child = parent.getChildAt(i * 7);
             if (child == null) return;
@@ -185,8 +177,6 @@ public class MiddleDividerItemDecoration extends RecyclerView.ItemDecoration {
             bottom = parent.getHeight();
         }
 
-        int childCount = parent.getChildCount();
-
         for (int i = 0; i < 7; ++i) {
             View child = parent.getChildAt(i);
             parent.getLayoutManager().getDecoratedBoundsWithMargins(child, this.mBounds);
@@ -197,36 +187,6 @@ public class MiddleDividerItemDecoration extends RecyclerView.ItemDecoration {
         }
 
         canvas.restore();
-
-//        canvas.save();
-//
-//        int top;
-//        int bottom;
-//
-//        if (parent.getClipToPadding()) {
-//            top = parent.getPaddingTop();
-//            bottom = parent.getHeight() - parent.getPaddingBottom();
-//            canvas.clipRect(parent.getPaddingLeft(), top, parent.getWidth()-parent.getPaddingRight(), bottom);
-//        } else {
-//            top = 0;
-//            bottom = parent.getHeight();
-//        }
-//
-//        int childCount = parent.getChildCount();
-//        if (parent.getLayoutManager() instanceof GridLayoutManager) {
-//            //childCount = ((GridLayoutManager)parent.getLayoutManager()).getSpanCount();
-//        }
-//
-//        for (int i=0 ; i<childCount-1 ; i++) {
-//            View child = parent.getChildAt(i);
-//            if(child == null) return;
-//            int right = mBounds.right + Math.round(child.getTranslationX());
-//            int left = right - mDivider.getIntrinsicWidth();
-//            mDivider.setBounds(left, top, right, bottom);
-//            mDivider.draw(canvas);
-//        }
-//
-//        canvas.restore();
     }
 
     @Override

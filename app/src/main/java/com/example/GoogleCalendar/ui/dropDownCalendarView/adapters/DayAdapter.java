@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.ui.dropDownCalendarView.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -8,6 +8,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.GoogleCalendar.models.DayModel;
+import com.example.GoogleCalendar.ui.MainActivity;
+import com.example.GoogleCalendar.models.MessageEvent;
+import com.example.GoogleCalendar.R;
 
 import org.greenrobot.eventbus.EventBus;
 import org.joda.time.LocalDate;

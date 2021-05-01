@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar
+package com.example.GoogleCalendar.ui
 
 import android.content.Context
 import android.util.AttributeSet

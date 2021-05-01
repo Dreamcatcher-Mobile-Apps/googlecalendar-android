@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.data;
 
 import android.Manifest;
 import android.content.Context;
@@ -17,9 +17,9 @@ import java.util.HashMap;
 import androidx.core.app.ActivityCompat;
 
 
-public class Utility {
+public class CalendarDataRepository {
 
-    public static HashMap<LocalDate, String[]> readCalendarEvent(Context context, LocalDate mintime, LocalDate maxtime) {
+    public static HashMap<LocalDate, String[]> readCalendarEventsData(Context context, LocalDate mintime, LocalDate maxtime) {
 
         HashMap<LocalDate, String[]> localDateHashMap = new HashMap<>();
 
@@ -75,13 +75,11 @@ public class Utility {
 
                 }
             }
-
-
         }
         return localDateHashMap;
     }
 
-    public static LocalDate getDate(long milliSeconds) {
+    private static LocalDate getDate(long milliSeconds) {
         Instant instantFromEpochMilli
                 = Instant.ofEpochMilli(milliSeconds);
         return instantFromEpochMilli.toDateTime(DateTimeZone.getDefault()).toLocalDate();

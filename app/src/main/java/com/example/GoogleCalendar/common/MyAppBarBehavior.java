@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.common;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -18,13 +18,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
  */
 public class MyAppBarBehavior extends AppBarLayout.Behavior {
 
-    private static final int TOP_CHILD_FLING_THRESHOLD = 3;
-    // Touch above this y-axis value can open the appBar.
-    private int mCanOpenBottom;
     private boolean shouldScroll = false;
-    // Determines if the appBar can be dragged open or not via direct touch on the appBar.
-    private boolean mCanDrag = true;
-    private boolean isPositive;
 
     @SuppressWarnings("unused")
     public MyAppBarBehavior() {
@@ -55,10 +49,6 @@ public class MyAppBarBehavior extends AppBarLayout.Behavior {
         this.shouldScroll = shouldScroll;
     }
 
-    public boolean isShouldScroll() {
-        return shouldScroll;
-    }
-
     private void init() {
         setDragCallback(new AppBarLayout.Behavior.DragCallback() {
             @Override
@@ -66,24 +56,5 @@ public class MyAppBarBehavior extends AppBarLayout.Behavior {
                 return true;
             }
         });
-    }
-
-
-    @Override
-    public boolean onInterceptTouchEvent(CoordinatorLayout parent,
-                                         AppBarLayout child,
-                                         MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            // If appBar is closed. Only allow scrolling in defined area.
-            if (child.getTop() <= -child.getTotalScrollRange()) {
-                mCanDrag = event.getY() < mCanOpenBottom;
-            }
-        }
-        return super.onInterceptTouchEvent(parent, child, event);
-    }
-
-
-    public void setCanOpenBottom(int bottom) {
-        mCanOpenBottom = bottom;
     }
 }

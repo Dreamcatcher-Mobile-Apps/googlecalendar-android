@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.ui;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -35,6 +35,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.example.GoogleCalendar.interfaces.MonthChangeListener;
+import com.example.GoogleCalendar.common.MyAppBarBehavior;
+import com.example.GoogleCalendar.R;
+import com.example.GoogleCalendar.data.CalendarDataRepository;
+import com.example.GoogleCalendar.models.AddEvent;
+import com.example.GoogleCalendar.models.EventModel;
+import com.example.GoogleCalendar.models.MessageEvent;
+import com.example.GoogleCalendar.models.MonthChange;
+import com.example.GoogleCalendar.models.MonthModel;
+import com.example.GoogleCalendar.ui.dropDownCalendarView.GoogleCalenderView;
+import com.example.GoogleCalendar.ui.fullScreenMonthCalendarView.MonthFragment;
 import com.gjiazhe.scrollparallaximageview.ScrollParallaxImageView;
 import com.gjiazhe.scrollparallaximageview.parallaxstyle.VerticalMovingStyle;
 import com.google.android.material.appbar.AppBarLayout;
@@ -72,7 +83,7 @@ public class MainActivity extends AppCompatActivity
     private boolean isappbarclosed = true;
     private int month;
     private int expandedfirst;
-    private GooglecalenderView calendarView;
+    private GoogleCalenderView calendarView;
     private ArrayList<EventModel> eventalllist;
     private HashMap<LocalDate, Integer> indextrack;
     private HashMap<LocalDate, Integer> dupindextrack;
@@ -127,7 +138,7 @@ public class MainActivity extends AppCompatActivity
         } else if (item.getItemId() == R.id.action_refresh) {
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
-            alleventlist = Utility.readCalendarEvent(this, mintime, maxtime);
+            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
             calendarView.init(alleventlist, mintime, maxtime);
         }
 
@@ -208,9 +219,9 @@ public class MainActivity extends AppCompatActivity
 
 
         monthname = findViewById(R.id.monthname);
-        calendarView.setMonthChangeListner(new MonthChangeListner() {
+        calendarView.setMonthChangeListener(new MonthChangeListener() {
             @Override
-            public void onmonthChange(MonthModel monthModel) {
+            public void onMonthChange(MonthModel monthModel) {
                 /**
                  * call when Googlecalendarview is open  scroll viewpager available inside GoogleCalendar
                  */
@@ -233,7 +244,7 @@ public class MainActivity extends AppCompatActivity
         } else {
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
-            alleventlist = Utility.readCalendarEvent(this, mintime, maxtime);
+            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
             calendarView.init(alleventlist, mintime, maxtime);
             calendarView.setCurrentmonth(new LocalDate());
             calendarView.adjustheight();
@@ -381,7 +392,7 @@ public class MainActivity extends AppCompatActivity
         if (requestCode == 200 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
-            alleventlist = Utility.readCalendarEvent(this, mintime, maxtime);
+            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
             calendarView.init(alleventlist, mintime.minusYears(10), maxtime.plusYears(10));
             new Handler().postDelayed(new Runnable() {
                 @Override

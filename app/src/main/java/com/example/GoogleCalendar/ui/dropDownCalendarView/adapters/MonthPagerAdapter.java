@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar;
+package com.example.GoogleCalendar.ui.dropDownCalendarView.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,14 +8,17 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.GoogleCalendar.models.MonthModel;
+import com.example.GoogleCalendar.R;
+
 import java.util.ArrayList;
 
-class MonthPagerAdapter extends RecyclerView.Adapter<MonthPagerAdapter.MonthViewHolder> {
+public class MonthPagerAdapter extends RecyclerView.Adapter<MonthPagerAdapter.MonthViewHolder> {
     private ArrayList<MonthModel> monthModels;
     private LayoutInflater mInflater;
     private Context context;
 
-    MonthPagerAdapter(Context context, ArrayList<MonthModel> data) {
+    public MonthPagerAdapter(Context context, ArrayList<MonthModel> data) {
         this.context = context;
         this.mInflater = LayoutInflater.from(context);
         this.monthModels = data;
@@ -45,8 +48,12 @@ class MonthPagerAdapter extends RecyclerView.Adapter<MonthPagerAdapter.MonthView
         return monthModels;
     }
 
-    class MonthViewHolder extends RecyclerView.ViewHolder {
+    public class MonthViewHolder extends RecyclerView.ViewHolder {
         RecyclerView gridview;
+
+        public RecyclerView getGridview() {
+            return gridview;
+        }
 
         MonthViewHolder(View itemView) {
             super(itemView);

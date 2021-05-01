@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:background="@android:color/white"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ui.MainActivity">
 
 
 
@@ -17,7 +17,7 @@
         app:expanded="false"
         app:elevation="0dp"
         android:background="@android:color/white"
-        app:layout_behavior=".MyAppBarBehavior"
+        app:layout_behavior=".common.MyAppBarBehavior"
         tools:targetApi="lollipop">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -28,7 +28,7 @@
             app:statusBarScrim="?attr/colorPrimaryDark">
 
             <!--large view -->
-            <com.example.GoogleCalendar.GooglecalenderView
+            <com.example.GoogleCalendar.ui.dropDownCalendarView.GoogleCalenderView
                 android:id="@+id/calander"
                 android:layout_width="match_parent"
                 android:layout_height="500dp"
@@ -36,7 +36,7 @@
                 android:layout_marginTop="?attr/actionBarSize"
                 >
 
-            </com.example.GoogleCalendar.GooglecalenderView>
+            </com.example.GoogleCalendar.ui.dropDownCalendarView.GoogleCalenderView>
 
             <!--top toolbar-->
             <androidx.appcompat.widget.Toolbar
@@ -101,7 +101,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.example.GoogleCalendar.MyRecyclerView
+    <com.example.GoogleCalendar.ui.MyRecyclerView
         android:id="@+id/nestedView"
         android:layout_width="match_parent"
         android:overScrollMode="never"

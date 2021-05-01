@@ -5,7 +5,7 @@ import android.graphics.Rect;
 import android.util.SparseArray;
 import android.view.View;
 
-import com.example.GoogleCalendar.MainActivity;
+import com.example.GoogleCalendar.ui.MainActivity;
 import com.timehop.stickyheadersrecyclerview.caching.HeaderProvider;
 import com.timehop.stickyheadersrecyclerview.caching.HeaderViewCache;
 import com.timehop.stickyheadersrecyclerview.calculation.DimensionCalculator;
