@@ -9,6 +9,9 @@ public class EventModel implements Comparable<EventModel> {
     private LocalDate localDate;
     private int type;
 
+    // Todo: We should stop using the localDate, and only use the dates from within eventData.
+    //  The problem is that in few places the localDate serves as a key to fetch particular events.
+
     public EventModel(EventDataModel eventData, LocalDate localDate, int type) {
         this.eventData = eventData;
         this.localDate = localDate;

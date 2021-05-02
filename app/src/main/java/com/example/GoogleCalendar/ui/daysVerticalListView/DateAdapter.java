@@ -19,15 +19,13 @@ import com.gjiazhe.scrollparallaximageview.parallaxstyle.VerticalMovingStyle;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 
 public class DateAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements StickyRecyclerHeadersAdapter<RecyclerView.ViewHolder> {
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     LocalDate today = LocalDate.now();
     private int lastchangeindex = -1;
     private final int[] monthresource = {
@@ -313,16 +311,16 @@ public class DateAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             LocalDate localDate = items.get(getAdapterPosition()).getLocalDate();
             String title = items.get(getAdapterPosition()).getEventData().getEventName();
             String date = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM");
-            String toastText = title + "\n" + date;
+            String toastText = title + "\n\n" + date;
             if (items.get(getAdapterPosition()).getEventData().getStartDateTime() != null) {
-                Date startingTime = items.get(getAdapterPosition()).getEventData().getStartDateTime().toDate();
-                String startingTimeString = dateFormat.format(startingTime);
-                toastText += ("\n" + startingTimeString);
+                LocalDateTime startingTime = items.get(getAdapterPosition()).getEventData().getStartDateTime();
+                String startingHourString = startingTime.toString("HH:mm");
+                toastText += ("\n" + startingHourString);
             }
             if (items.get(getAdapterPosition()).getEventData().getEndDateTime() != null) {
-                Date endingTime = items.get(getAdapterPosition()).getEventData().getEndDateTime().toDate();
-                String endingTimeString = dateFormat.format(endingTime);
-                toastText += ("\n" + endingTimeString);
+                LocalDateTime endingTime = items.get(getAdapterPosition()).getEventData().getEndDateTime();
+                String endingTimeString = endingTime.toString("HH:mm");
+                toastText += (" - " + endingTimeString);
             }
             if (mostRecentToastMessage != null) {
                 mostRecentToastMessage.cancel();
