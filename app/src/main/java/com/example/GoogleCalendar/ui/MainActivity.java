@@ -11,15 +11,12 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -35,23 +32,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
-import com.example.GoogleCalendar.common.Converters;
-import com.example.GoogleCalendar.interfaces.MonthChangeListener;
-import com.example.GoogleCalendar.common.MyAppBarBehavior;
 import com.example.GoogleCalendar.R;
+import com.example.GoogleCalendar.common.MyAppBarBehavior;
 import com.example.GoogleCalendar.data.CalendarDataRepository;
+import com.example.GoogleCalendar.interfaces.MonthChangeListener;
 import com.example.GoogleCalendar.models.AddEvent;
 import com.example.GoogleCalendar.models.EventDataModel;
-import com.example.GoogleCalendar.models.EventModel;
 import com.example.GoogleCalendar.models.MessageEvent;
 import com.example.GoogleCalendar.models.MonthChange;
 import com.example.GoogleCalendar.models.MonthModel;
 import com.example.GoogleCalendar.ui.dropDownCalendarView.GoogleCalenderView;
 import com.example.GoogleCalendar.ui.fullScreenMonthCalendarView.MonthFragment;
-import com.gjiazhe.scrollparallaximageview.ScrollParallaxImageView;
-import com.gjiazhe.scrollparallaximageview.parallaxstyle.VerticalMovingStyle;
 import com.google.android.material.appbar.AppBarLayout;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
 import org.greenrobot.eventbus.EventBus;
@@ -60,7 +52,6 @@ import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
@@ -81,30 +72,13 @@ public class MainActivity extends AppCompatActivity
     private ImageView mArrowImageView;
     private TextView monthname;
     private Toolbar toolbar;
-    private int lastchangeindex = -1;
     private boolean isappbarclosed = true;
     private int month;
-    private int expandedfirst;
+    int expandedfirst;
     private GoogleCalenderView calendarView;
-    private ArrayList<EventModel> eventalllist;
-    private HashMap<LocalDate, Integer> indextrack;
-    private HashMap<LocalDate, Integer> dupindextrack;
-    private String[] var = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN",};
-    private Toast mostRecentToastMessage;
-    private int[] monthresource = {
-            R.drawable.bkg_01_jan,
-            R.drawable.bkg_02_feb,
-            R.drawable.bkg_03_mar,
-            R.drawable.bkg_04_apr,
-            R.drawable.bkg_05_may,
-            R.drawable.bkg_06_jun,
-            R.drawable.bkg_07_jul,
-            R.drawable.bkg_08_aug,
-            R.drawable.bkg_09_sep,
-            R.drawable.bkg_10_oct,
-            R.drawable.bkg_11_nov,
-            R.drawable.bkg_12_dec
-    };
+    HashMap<LocalDate, Integer> indextrack;
+    HashMap<LocalDate, Integer> dupindextrack;
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -141,8 +115,7 @@ public class MainActivity extends AppCompatActivity
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
             alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            HashMap<LocalDate, String[]> calendarViewEventList = Converters.Companion.convertEventsDataMapToEventTitlesMap(alleventlist);
-            calendarView.init(calendarViewEventList, mintime, maxtime);
+            calendarView.init(alleventlist, mintime, maxtime);
         }
 
         return super.onOptionsItemSelected(item);
@@ -171,8 +144,6 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        eventalllist = new ArrayList<>();
-        Log.e("create", "oncreate" + eventalllist.size());
         indextrack = new HashMap<>();
         dupindextrack = new HashMap<>();
         mAppBar = findViewById(R.id.app_bar);
@@ -213,13 +184,11 @@ public class MainActivity extends AppCompatActivity
         final LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mNestedView.setLayoutManager(linearLayoutManager);
-        DateAdapter dateAdapter = new DateAdapter();
+        DateAdapter dateAdapter = new DateAdapter(this, linearLayoutManager);
         mNestedView.setAdapter(dateAdapter);
-
         final StickyRecyclerHeadersDecoration headersDecor = new StickyRecyclerHeadersDecoration(dateAdapter);
         mNestedView.addItemDecoration(headersDecor);
         EventBus.getDefault().register(this);
-
 
         monthname = findViewById(R.id.monthname);
         calendarView.setMonthChangeListener(new MonthChangeListener() {
@@ -248,8 +217,7 @@ public class MainActivity extends AppCompatActivity
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
             alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            HashMap<LocalDate, String[]> calendarViewEventList = Converters.Companion.convertEventsDataMapToEventTitlesMap(alleventlist);
-            calendarView.init(calendarViewEventList, mintime, maxtime);
+            calendarView.init(alleventlist, mintime, maxtime);
             calendarView.setCurrentmonth(new LocalDate());
             calendarView.adjustheight();
             mIsExpanded = false;
@@ -397,8 +365,7 @@ public class MainActivity extends AppCompatActivity
             LocalDate mintime = new LocalDate().minusYears(5);
             LocalDate maxtime = new LocalDate().plusYears(5);
             alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            HashMap<LocalDate, String[]> calendarViewEventList = Converters.Companion.convertEventsDataMapToEventTitlesMap(alleventlist);
-            calendarView.init(calendarViewEventList, mintime.minusYears(10), maxtime.plusYears(10));
+            calendarView.init(alleventlist, mintime.minusYears(10), maxtime.plusYears(10));
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -449,96 +416,7 @@ public class MainActivity extends AppCompatActivity
     @Subscribe
     public void onEvent(MessageEvent event) {
         Log.e("call", "onEvent(MessageEvent event)");
-
-        int previous = lastchangeindex;
-        if (previous != -1) {
-            indextrack.clear();
-            indextrack.putAll(dupindextrack);
-            mNestedView.getAdapter().notifyDataSetChanged();
-        }
-
-        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) mNestedView.getLayoutManager();
-        if (indextrack.containsKey(event.getMessage())) {
-            int index = indextrack.get(event.getMessage());
-            int type = eventalllist.get(index).getType();
-            if (type == 0 || type == 2) {
-
-                lastdate = event.getMessage();
-                expandedfirst = index;
-                topspace = 20;
-                linearLayoutManager.scrollToPositionWithOffset(expandedfirst, 20);
-                lastchangeindex = -1;
-
-            } else {
-                lastdate = event.getMessage();
-
-                Integer ind = indextrack.get(event.getMessage());
-                ind++;
-                for (int i = ind; i < eventalllist.size(); i++) {
-                    if (event.getMessage().isBefore(eventalllist.get(i).getLocalDate())) {
-                        ind = i;
-                        break;
-                    }
-                }
-                lastchangeindex = ind;
-                int typeselect = eventalllist.get(ind + 1).getType() == 200 ? 200 : 100;
-                if (!eventalllist.get(ind - 1).getEventname().startsWith("dup")) {
-                    eventalllist.add(ind, new EventModel("dupli", event.getMessage(), typeselect));
-                    ind++;
-                }
-                expandedfirst = ind;
-                eventalllist.add(ind, new EventModel("click", event.getMessage(), 1000));
-                ind++;
-                if (!eventalllist.get(ind).getEventname().startsWith("dup")) {
-
-                    eventalllist.add(ind, new EventModel("dupli", event.getMessage(), typeselect));
-                }
-                mNestedView.getAdapter().notifyDataSetChanged();
-
-                topspace = 20;
-                linearLayoutManager.scrollToPositionWithOffset(expandedfirst, 20);
-
-                for (int i = lastchangeindex; i < eventalllist.size(); i++) {
-                    if (!eventalllist.get(i).getEventname().startsWith("dup"))
-                        indextrack.put(eventalllist.get(i).getLocalDate(), i);
-                }
-            }
-
-        } else {
-            Integer ind = indextrack.get(event.getMessage().dayOfWeek().withMinimumValue().minusDays(1));
-            ind++;
-            for (int i = ind; i < eventalllist.size(); i++) {
-
-                if (event.getMessage().isBefore(eventalllist.get(i).getLocalDate())) {
-                    ind = i;
-                    break;
-                }
-            }
-            lastchangeindex = ind;
-            int typeselect = eventalllist.get(ind + 1).getType() == 200 ? 200 : 100;
-            if (!eventalllist.get(ind - 1).getEventname().startsWith("dup")) {
-
-                eventalllist.add(ind, new EventModel("dupli", event.getMessage(), typeselect));
-                ind++;
-            }
-            expandedfirst = ind;
-
-            eventalllist.add(ind, new EventModel("click", event.getMessage(), 1000));
-            ind++;
-            if (!eventalllist.get(ind).getEventname().startsWith("dup")) {
-
-                eventalllist.add(ind, new EventModel("dupli", event.getMessage(), typeselect));
-            }
-
-            mNestedView.getAdapter().notifyDataSetChanged();
-            topspace = 20;
-            linearLayoutManager.scrollToPositionWithOffset(expandedfirst, 20);
-
-            for (int i = lastchangeindex; i < eventalllist.size(); i++) {
-                if (!eventalllist.get(i).getEventname().startsWith("dup"))
-                    indextrack.put(eventalllist.get(i).getLocalDate(), i);
-            }
-        }
+        ((DateAdapter)mNestedView.getAdapter()).onMessageEventTrigerred(event);
     }
 
     private int getDeviceHeight() {
@@ -582,7 +460,8 @@ public class MainActivity extends AppCompatActivity
     @Subscribe
     public void onEvent(final AddEvent event) {
         Log.e("call", "onEvent(final AddEvent event)");
-        eventalllist = event.getArrayList();
+
+        ((DateAdapter)mNestedView.getAdapter()).setDateAdapterItems(event.getArrayList());
 
         final TypedValue tv = new TypedValue();
         if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
@@ -622,8 +501,6 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }, 100);
-
-
     }
 
     private void setExpandAndCollapseEnabled(boolean enabled) {
@@ -696,232 +573,6 @@ public class MainActivity extends AppCompatActivity
         @Override
         public Fragment getItem(int position) {
             return MonthFragment.newInstance(monthModels.get(position).getMonth(), monthModels.get(position).getYear(), monthModels.get(position).getFirstday(), monthModels.get(position).getDayModelArrayList(), alleventlist, singleitemheight);
-        }
-    }
-
-    public class DateAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements StickyRecyclerHeadersAdapter<RecyclerView.ViewHolder> {
-
-        LocalDate today = LocalDate.now();
-
-        public ArrayList<EventModel> geteventallList() {
-            return eventalllist;
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            if (position > 1 && eventalllist.get(position).getType() == 0 && getHeaderId(position) == getHeaderId(position - 1))
-                return 5;
-            if (position > 1 && eventalllist.get(position).getType() == 3 && eventalllist.get(position - 1).getType() == 1)
-                return 7;
-            if (position + 1 < eventalllist.size() && eventalllist.get(position).getType() == 3 && (eventalllist.get(position + 1).getType() == 1 || eventalllist.get(position + 1).getType() == 0))
-                return 6;
-            return eventalllist.get(position).getType();
-        }
-
-        public int getHeaderItemViewType(int position) {
-            return eventalllist.get(position).getType();
-        }
-
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            if (viewType == 0) {
-
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.view_item, parent, false);
-
-                return new ItemViewHolder(view);
-            } else if (viewType == 5) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.viewitemlessspace, parent, false);
-                return new ItemViewHolder(view);
-            } else if (viewType == 100) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.extraspace, parent, false);
-                return new RecyclerView.ViewHolder(view) {
-                };
-            } else if (viewType == 200) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.liitlespace, parent, false);
-                return new RecyclerView.ViewHolder(view) {
-                };
-            } else if (viewType == 1) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.viewlast, parent, false);
-                return new EndViewHolder(view);
-            } else if (viewType == 2) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.noplanlay, parent, false);
-                return new NoplanViewHolder(view);
-            } else if (viewType == 1000) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.noplanlittlespace, parent, false);
-                return new NoplanViewHolder(view);
-            } else if (viewType == 6) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.rangelayextrabottomspace, parent, false);
-                return new RangeViewHolder(view);
-            } else if (viewType == 7) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.rangelayextratopspace, parent, false);
-                return new RangeViewHolder(view);
-            } else {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.rangelay, parent, false);
-                return new RangeViewHolder(view);
-            }
-        }
-
-        @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
-            int viewtype = getItemViewType(position);
-            if (viewtype == 0 || viewtype == 5) {
-
-                ItemViewHolder holder = (ItemViewHolder) viewHolder;
-                holder.eventtextview.setText(eventalllist.get(position).getEventname());
-                if (position + 1 < eventalllist.size() && eventalllist.get(position).getLocalDate().equals(today) && (!eventalllist.get(position + 1).getLocalDate().equals(today) || eventalllist.get(position + 1).getType() == 100 || eventalllist.get(position + 1).getType() == 200)) {
-                    holder.circle.setVisibility(View.VISIBLE);
-                    holder.line.setVisibility(View.VISIBLE);
-
-                } else {
-                    holder.circle.setVisibility(View.GONE);
-                    holder.line.setVisibility(View.GONE);
-                }
-            } else if (viewtype == 1) {
-
-                EndViewHolder holder = (EndViewHolder) viewHolder;
-                holder.eventimageview.setImageResource(monthresource[eventalllist.get(position).getLocalDate().getMonthOfYear() - 1]);
-                holder.monthname.setText(eventalllist.get(position).getLocalDate().toString("MMMM YYYY"));
-            } else if (viewtype == 2 || viewtype == 100 || viewtype == 200 || viewtype == 1000) {
-
-            } else {
-                RangeViewHolder holder = (RangeViewHolder) viewHolder;
-                holder.rangetextview.setText(eventalllist.get(position).getEventname().replaceAll("tojigs", ""));
-            }
-
-        }
-
-        @Override
-        public long getHeaderId(int position) {
-            if (eventalllist.get(position).getType() == 1) return position;
-            else if (eventalllist.get(position).getType() == 3) return position;
-            else if (eventalllist.get(position).getType() == 100) return position;
-            else if (eventalllist.get(position).getType() == 200) return position;
-            LocalDate localDate = eventalllist.get(position).getLocalDate();
-            String uniquestr = "" + localDate.getDayOfMonth() + localDate.getMonthOfYear() + localDate.getYear();
-            return Long.parseLong(uniquestr);
-        }
-
-        @Override
-        public RecyclerView.ViewHolder onCreateHeaderViewHolder(ViewGroup parent, int position) {
-            int viewtype = getHeaderItemViewType(position);
-            if (viewtype == 2) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.todayheader, parent, false);
-                return new RecyclerView.ViewHolder(view) {
-                };
-            } else if (viewtype == 0 && eventalllist.get(position).getLocalDate().equals(today)) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.todayheader, parent, false);
-                return new RecyclerView.ViewHolder(view) {
-                };
-            } else if (viewtype == 1 || viewtype == 3 || viewtype == 100 || viewtype == 200) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.empty, parent, false);
-                return new RecyclerView.ViewHolder(view) {
-                };
-            } else {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.headerview, parent, false);
-                return new RecyclerView.ViewHolder(view) {
-                };
-            }
-        }
-
-        @Override
-        public void onBindHeaderViewHolder(RecyclerView.ViewHolder holder, int position) {
-            int viewtype = getHeaderItemViewType(position);
-            if (viewtype == 0 || viewtype == 2 || viewtype == 1000) {
-                TextView vartextView = holder.itemView.findViewById(R.id.textView9);
-                TextView datetextView = holder.itemView.findViewById(R.id.textView10);
-                vartextView.setText(var[eventalllist.get(position).getLocalDate().getDayOfWeek() - 1]);
-                datetextView.setText(eventalllist.get(position).getLocalDate().getDayOfMonth() + "");
-                holder.itemView.setTag(position);
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            return eventalllist.size();
-        }
-
-        class ItemViewHolder extends RecyclerView.ViewHolder {
-            String daysList[] = {"", "Monday", "Tuesday", "Wednesday",
-                    "Thursday", "Friday", "Saturday", "Sunday"};
-
-            TextView eventtextview;
-            View circle, line;
-
-            public ItemViewHolder(View itemView) {
-                super(itemView);
-                eventtextview = itemView.findViewById(R.id.view_item_textview);
-                eventtextview.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(final View v) {
-
-
-                        LocalDate localDate = eventalllist.get(getAdapterPosition()).getLocalDate();
-                        String title = eventalllist.get(getAdapterPosition()).getEventname();
-                        String date = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM");
-
-//                        String startingTime = eventalllist.get(getAdapterPosition());
-//                        String endingTime = "";
-
-                        String toastText = title + "\n" + date;
-                        if (mostRecentToastMessage != null) {
-                            mostRecentToastMessage.cancel();
-                        }
-                        mostRecentToastMessage = Toast.makeText(MainActivity.this, toastText, Toast.LENGTH_SHORT);
-                        mostRecentToastMessage.show();
-
-
-                    }
-                });
-                circle = itemView.findViewById(R.id.circle);
-                line = itemView.findViewById(R.id.line);
-            }
-        }
-
-        class EndViewHolder extends RecyclerView.ViewHolder {
-
-            ScrollParallaxImageView eventimageview;
-            TextView monthname;
-
-            public EndViewHolder(View itemView) {
-                super(itemView);
-                eventimageview = itemView.findViewById(R.id.imageView);
-                eventimageview.setParallaxStyles(new VerticalMovingStyle());
-                monthname = itemView.findViewById(R.id.textView11);
-            }
-        }
-
-        class NoplanViewHolder extends RecyclerView.ViewHolder {
-
-            TextView noplantextview;
-
-            public NoplanViewHolder(View itemView) {
-                super(itemView);
-                noplantextview = itemView.findViewById(R.id.view_noplan_textview);
-            }
-        }
-
-        class RangeViewHolder extends RecyclerView.ViewHolder {
-
-            TextView rangetextview;
-
-            public RangeViewHolder(View itemView) {
-                super(itemView);
-                rangetextview = itemView.findViewById(R.id.view_range_textview);
-            }
         }
     }
 }

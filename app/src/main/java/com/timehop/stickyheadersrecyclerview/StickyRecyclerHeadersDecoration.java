@@ -5,6 +5,7 @@ import android.graphics.Rect;
 import android.util.SparseArray;
 import android.view.View;
 
+import com.example.GoogleCalendar.ui.DateAdapter;
 import com.example.GoogleCalendar.ui.MainActivity;
 import com.timehop.stickyheadersrecyclerview.caching.HeaderProvider;
 import com.timehop.stickyheadersrecyclerview.caching.HeaderViewCache;
@@ -17,7 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class StickyRecyclerHeadersDecoration extends RecyclerView.ItemDecoration {
-    private final MainActivity.DateAdapter mAdapter;
+    private final DateAdapter mAdapter;
     private final ItemVisibilityAdapter mVisibilityAdapter;
     private final SparseArray<Rect> mHeaderRects = new SparseArray<>();
     private final HeaderProvider mHeaderProvider;
@@ -37,10 +38,6 @@ public class StickyRecyclerHeadersDecoration extends RecyclerView.ItemDecoration
         this(adapter, new LinearLayoutOrientationProvider(), new DimensionCalculator(), null);
     }
 
-    public StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter, ItemVisibilityAdapter visibilityAdapter) {
-        this(adapter, new LinearLayoutOrientationProvider(), new DimensionCalculator(), visibilityAdapter);
-    }
-
     private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter, OrientationProvider orientationProvider,
                                             DimensionCalculator dimensionCalculator, ItemVisibilityAdapter visibilityAdapter) {
         this(adapter, orientationProvider, dimensionCalculator, new HeaderRenderer(orientationProvider),
@@ -57,7 +54,7 @@ public class StickyRecyclerHeadersDecoration extends RecyclerView.ItemDecoration
     private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter, HeaderRenderer headerRenderer,
                                             OrientationProvider orientationProvider, DimensionCalculator dimensionCalculator, HeaderProvider headerProvider,
                                             HeaderPositionCalculator headerPositionCalculator, ItemVisibilityAdapter visibilityAdapter) {
-        mAdapter = (MainActivity.DateAdapter) adapter;
+        mAdapter = (DateAdapter) adapter;
         mHeaderProvider = headerProvider;
         mOrientationProvider = orientationProvider;
         mRenderer = headerRenderer;

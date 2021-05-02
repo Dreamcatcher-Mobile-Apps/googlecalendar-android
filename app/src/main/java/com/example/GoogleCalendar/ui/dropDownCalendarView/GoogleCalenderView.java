@@ -11,8 +11,10 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.GoogleCalendar.common.Converters;
 import com.example.GoogleCalendar.models.AddEvent;
 import com.example.GoogleCalendar.models.DayModel;
+import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.models.EventModel;
 import com.example.GoogleCalendar.ui.MainActivity;
 import com.example.GoogleCalendar.models.MessageEvent;
@@ -39,8 +41,8 @@ public class GoogleCalenderView extends LinearLayout {
     private ViewPager2 viewPager;
     private MonthChangeListener monthChangeListener;
     private int currentmonth = 0;
-    private LocalDate mindate, maxdate;
-    private HashMap<LocalDate, String[]> eventuser = new HashMap<>();
+    private LocalDate mindate;
+    private HashMap<LocalDate, EventDataModel[]> eventuser = new HashMap<>();
 
     public GoogleCalenderView(Context context) {
         super(context);
@@ -80,18 +82,16 @@ public class GoogleCalenderView extends LinearLayout {
         }
     }
 
-    public void init(HashMap<LocalDate, String[]> eventhashmap, LocalDate mindate, LocalDate maxdate) {
+    public void init(HashMap<LocalDate, EventDataModel[]> eventhashmap, LocalDate mindate, LocalDate maxdate) {
         eventuser = eventhashmap;
         viewPager = findViewById(R.id.viewpager);
-
         this.mindate = mindate;
-        this.maxdate = maxdate;
         DateTime mindateobj = mindate.toDateTimeAtStartOfDay();
         DateTime maxdateobj = maxdate.toDateTimeAtStartOfDay();
         int months = Months.monthsBetween(mindateobj, maxdateobj).getMonths();
 
         final ArrayList<MonthModel> arrayList = new ArrayList<>();
-        HashMap<LocalDate, String[]> eventhash = new HashMap<>();
+        HashMap<LocalDate, EventDataModel[]> eventhash = new HashMap<>();
 
         for (int i = 0; i <= months; i++) {
 
@@ -103,25 +103,25 @@ public class GoogleCalenderView extends LinearLayout {
             month.setNoofday(mindateobj.dayOfMonth().getMaximumValue());
             month.setYear(mindateobj.getYear());
             month.setFirstday(firstday);
-            int currentyear = new LocalDate().getYear();
+            int currentYear = new LocalDate().getYear();
             ArrayList<DayModel> dayModelArrayList = new ArrayList<>();
             DateTime startday = mindateobj.dayOfMonth().withMinimumValue().withTimeAtStartOfDay();
             LocalDate minweek = startday.dayOfWeek().withMinimumValue().toLocalDate().minusDays(1);
+
             while (minweek.compareTo(startday.dayOfMonth().withMaximumValue().toLocalDate()) < 0) {
                 if (minweek.getMonthOfYear() == minweek.plusDays(6).getMonthOfYear()) {
-                    String lastpattern = minweek.getYear() == currentyear ? "d MMM" : "d MMM YYYY";
-
+                    String lastpattern = minweek.getYear() == currentYear ? "d MMM" : "d MMM YYYY";
                     String s[] = {"tojigs" + minweek.toString("d").toUpperCase() + " - " + minweek.plusDays(6).toString(lastpattern).toUpperCase()};
-
-                    if (!eventhash.containsKey(minweek)) eventhash.put(minweek, s);
-
+                    if (!eventhash.containsKey(minweek)){
+                        eventhash.put(minweek, Converters.Companion.convertStringArrayToEventDataModelArray(s));
+                    }
                     minweek = minweek.plusWeeks(1);
-
                 } else {
-                    String lastpattern = minweek.getYear() == currentyear ? "d MMM" : "d MMM YYYY";
+                    String lastpattern = minweek.getYear() == currentYear ? "d MMM" : "d MMM YYYY";
                     String s[] = {"tojigs" + minweek.toString("d MMM").toUpperCase() + " - " + minweek.plusDays(6).toString(lastpattern).toUpperCase()};
-                    if (!eventhash.containsKey(minweek)) eventhash.put(minweek, s);
-
+                    if (!eventhash.containsKey(minweek)) {
+                        eventhash.put(minweek, Converters.Companion.convertStringArrayToEventDataModelArray(s));
+                    }
                     minweek = minweek.plusWeeks(1);
                 }
             }
@@ -134,13 +134,13 @@ public class GoogleCalenderView extends LinearLayout {
                 dayModel.setYear(startday.getYear());
                 if (eventuser.containsKey(startday.toLocalDate())) {
                     if (eventhash.containsKey(startday.toLocalDate())) {
-                        List<String> list = Arrays.asList(eventhash.get(startday.toLocalDate()));
+                        List<EventDataModel> list = Arrays.asList(eventhash.get(startday.toLocalDate()));
                         list = new ArrayList<>(list);
-                        for (String s : eventuser.get(startday.toLocalDate())) {
-                            list.add(s);
+                        for (EventDataModel event : eventuser.get(startday.toLocalDate())) {
+                            list.add(event);
                         }
-                        String[] mStringArray = new String[list.size()];
-                        String[] s = list.toArray(mStringArray);
+                        EventDataModel[] mEventsArray = new EventDataModel[list.size()];
+                        EventDataModel[] s = list.toArray(mEventsArray);
                         eventhash.put(startday.toLocalDate(), s);
                     } else {
                         eventhash.put(startday.toLocalDate(), eventuser.get(startday.toLocalDate()));
@@ -158,15 +158,15 @@ public class GoogleCalenderView extends LinearLayout {
                 dayModelArrayList.add(dayModel);
 
                 if (j == 1) {
-                    String s[] = {"start"};
+                    EventDataModel events[] = {new EventDataModel("start", null, null)};
                     if (eventhash.containsKey(startday.toLocalDate())) {
-                        List<String> list = Arrays.asList(eventhash.get(startday.toLocalDate()));
+                        List<EventDataModel> list = Arrays.asList(eventhash.get(startday.toLocalDate()));
                         list = new ArrayList<>(list);
-                        list.add(0, "start");
-                        String[] mStringArray = new String[list.size()];
-                        s = list.toArray(mStringArray);
+                        list.add(0, new EventDataModel("start", null, null));
+                        EventDataModel[] mEventsArray = new EventDataModel[list.size()];
+                        events = list.toArray(mEventsArray);
                     }
-                    eventhash.put(startday.toLocalDate(), s);
+                    eventhash.put(startday.toLocalDate(), events);
                 }
                 startday = startday.plusDays(1);
             }
@@ -181,48 +181,48 @@ public class GoogleCalenderView extends LinearLayout {
 
         LocalDate todaydate = LocalDate.now();
         if (!eventhash.containsKey(todaydate)) {
-            eventhash.put(todaydate, new String[]{"todaydate"});
+            eventhash.put(todaydate, new EventDataModel[]{new EventDataModel("todaydate", null, null)});
         } else {
-            List<String> list = Arrays.asList(eventhash.get(todaydate));
+            List<EventDataModel> list = Arrays.asList(eventhash.get(todaydate));
             list = new ArrayList<>(list);
 
-            list.add("todaydate");
+            list.add(new EventDataModel("todaydate", null, null));
 
-            String[] mStringArray = new String[list.size()];
-            eventhash.put(todaydate, list.toArray(mStringArray));
+            EventDataModel[] mEventsArray = new EventDataModel[list.size()];
+            eventhash.put(todaydate, list.toArray(mEventsArray));
         }
-        Map<LocalDate, String[]> treeMap = new TreeMap<LocalDate, String[]>(eventhash);
+        Map<LocalDate, EventDataModel[]> treeMap = new TreeMap<>(eventhash);
         HashMap<LocalDate, Integer> indextrack = new HashMap<>();
         int i = 0;
         ArrayList<EventModel> eventModelslist = new ArrayList<>();
-        for (HashMap.Entry<LocalDate, String[]> localDateStringEntry : treeMap.entrySet()) {
-            for (String s : localDateStringEntry.getValue()) {
-                if (s == null) continue;
+        for (HashMap.Entry<LocalDate, EventDataModel[]> localDateStringEntry : treeMap.entrySet()) {
+            for (EventDataModel event : localDateStringEntry.getValue()) {
+                if (event == null) continue;
                 int type = 0;
-                if (s.startsWith("todaydate")) type = 2;
-                else if (s.equals("start")) type = 1;
-                else if (s.contains("jigs")) type = 3;
+                if (event.getEventName().startsWith("todaydate")) type = 2;
+                else if (event.getEventName().equals("start")) type = 1;
+                else if (event.getEventName().contains("jigs")) type = 3;
                 if (type == 2 && eventModelslist.get(eventModelslist.size() - 1).getType() == 0 && eventModelslist.get(eventModelslist.size() - 1).getLocalDate().equals(localDateStringEntry.getKey())) {
 
                 } else {
                     if (type == 0 && eventModelslist.size() > 0 && eventModelslist.get(eventModelslist.size() - 1).getType() == 0 && !eventModelslist.get(eventModelslist.size() - 1).getLocalDate().equals(localDateStringEntry.getKey())) {
-                        eventModelslist.add(new EventModel("dup", localDateStringEntry.getKey(), 100));
+                        eventModelslist.add(new EventModel(new EventDataModel("dup", null, null), localDateStringEntry.getKey(), 100));
                         i++;
                     } else if ((type == 3) && eventModelslist.size() > 0 && eventModelslist.get(eventModelslist.size() - 1).getType() == 0) {
-                        eventModelslist.add(new EventModel("dup", eventModelslist.get(eventModelslist.size() - 1).getLocalDate(), 100));
+                        eventModelslist.add(new EventModel(new EventDataModel("dup", null, null), eventModelslist.get(eventModelslist.size() - 1).getLocalDate(), 100));
                         i++;
                     } else if ((type == 1) && eventModelslist.size() > 0 && eventModelslist.get(eventModelslist.size() - 1).getType() == 0) {
-                        eventModelslist.add(new EventModel("dup", eventModelslist.get(eventModelslist.size() - 1).getLocalDate(), 200));
+                        eventModelslist.add(new EventModel(new EventDataModel("dup", null, null), eventModelslist.get(eventModelslist.size() - 1).getLocalDate(), 200));
                         i++;
                     } else if (type == 0 && eventModelslist.size() > 0 && (eventModelslist.get(eventModelslist.size() - 1).getType() == 1)) {
-                        eventModelslist.add(new EventModel("dup", localDateStringEntry.getKey(), 200));
+                        eventModelslist.add(new EventModel(new EventDataModel("dup", null, null), localDateStringEntry.getKey(), 200));
                         i++;
                     } else if (type == 2 && eventModelslist.size() > 0 && eventModelslist.get(eventModelslist.size() - 1).getType() == 0) {
-                        eventModelslist.add(new EventModel("dup", eventModelslist.get(eventModelslist.size() - 1).getLocalDate(), 100));
+                        eventModelslist.add(new EventModel(new EventDataModel("dup", null, null), eventModelslist.get(eventModelslist.size() - 1).getLocalDate(), 100));
                         i++;
                     }
 
-                    eventModelslist.add(new EventModel(s, localDateStringEntry.getKey(), type));
+                    eventModelslist.add(new EventModel(event, localDateStringEntry.getKey(), type));
                     indextrack.put(localDateStringEntry.getKey(), i);
                     i++;
                 }
