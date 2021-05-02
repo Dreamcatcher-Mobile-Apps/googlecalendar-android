@@ -19,11 +19,14 @@ import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 
 import org.joda.time.LocalDate;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public class DateAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements StickyRecyclerHeadersAdapter<RecyclerView.ViewHolder> {
 
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     LocalDate today = LocalDate.now();
     private int lastchangeindex = -1;
     private final int[] monthresource = {
@@ -298,30 +301,33 @@ public class DateAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             eventtextview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
-
-                    // Todo: Move to separate method.
-                    LocalDate localDate = items.get(getAdapterPosition()).getLocalDate();
-                    String title = items.get(getAdapterPosition()).getEventData().getEventName();
-                    String date = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM");
-                    String toastText = title + "\n" + date;
-                    if (items.get(getAdapterPosition()).getEventData().getStartDateTime() != null) {
-                        String startingTime = items.get(getAdapterPosition()).getEventData().getStartDateTime().toString();
-                        toastText += ("\n" + startingTime);
-                    }
-                    if (items.get(getAdapterPosition()).getEventData().getEndDateTime() != null) {
-                        String endingTime = items.get(getAdapterPosition()).getEventData().getEndDateTime().toString();
-                        toastText += ("\n" + endingTime);
-                    }
-                    if (mostRecentToastMessage != null) {
-                        mostRecentToastMessage.cancel();
-                    }
-                    mostRecentToastMessage = Toast.makeText(activity, toastText, Toast.LENGTH_SHORT);
-                    mostRecentToastMessage.show();
-
+                    displayToastMessage();
                 }
             });
             circle = itemView.findViewById(R.id.circle);
             line = itemView.findViewById(R.id.line);
+        }
+
+        private void displayToastMessage() {
+            LocalDate localDate = items.get(getAdapterPosition()).getLocalDate();
+            String title = items.get(getAdapterPosition()).getEventData().getEventName();
+            String date = daysList[localDate.getDayOfWeek()] + ", " + localDate.toString("d MMM");
+            String toastText = title + "\n" + date;
+            if (items.get(getAdapterPosition()).getEventData().getStartDateTime() != null) {
+                Date startingTime = items.get(getAdapterPosition()).getEventData().getStartDateTime().toDate();
+                String startingTimeString = dateFormat.format(startingTime);
+                toastText += ("\n" + startingTimeString);
+            }
+            if (items.get(getAdapterPosition()).getEventData().getEndDateTime() != null) {
+                Date endingTime = items.get(getAdapterPosition()).getEventData().getEndDateTime().toDate();
+                String endingTimeString = dateFormat.format(endingTime);
+                toastText += ("\n" + endingTimeString);
+            }
+            if (mostRecentToastMessage != null) {
+                mostRecentToastMessage.cancel();
+            }
+            mostRecentToastMessage = Toast.makeText(activity, toastText, Toast.LENGTH_SHORT);
+            mostRecentToastMessage.show();
         }
     }
 
