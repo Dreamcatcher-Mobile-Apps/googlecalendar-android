@@ -1,10 +1,11 @@
-package com.example.GoogleCalendar.ui
+package com.example.GoogleCalendar.ui.daysVerticalListView
 
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.view.ViewCompat
+import com.example.GoogleCalendar.ui.MainActivity
 
 /**A RecyclerView that allows temporary pausing of casuing its scroll to affect appBarLayout, based on https://stackoverflow.com/a/45338791/878126 */
 class MyRecyclerView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyle: Int = 0) : androidx.recyclerview.widget.RecyclerView(context, attrs, defStyle) {

@@ -101,7 +101,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.example.GoogleCalendar.ui.MyRecyclerView
+    <com.example.GoogleCalendar.ui.daysVerticalListView.MyRecyclerView
         android:id="@+id/nestedView"
         android:layout_width="match_parent"
         android:overScrollMode="never"

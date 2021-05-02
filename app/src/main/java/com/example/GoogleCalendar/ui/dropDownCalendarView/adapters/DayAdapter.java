@@ -41,7 +41,6 @@ class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder> {
 
     @Override
     public void onBindViewHolder(DayAdapter.DayViewHolder holder, int position) {
-
         if (position >= firstday) {
             position = position - firstday;
             DayModel dayModel = dayModels.get(position);
@@ -79,7 +78,6 @@ class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder> {
     }
 
     class DayViewHolder extends RecyclerView.ViewHolder {
-
         private TextView textView;
         private View eventview;
 

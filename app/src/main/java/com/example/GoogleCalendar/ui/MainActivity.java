@@ -41,6 +41,8 @@ import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.models.MessageEvent;
 import com.example.GoogleCalendar.models.MonthChange;
 import com.example.GoogleCalendar.models.MonthModel;
+import com.example.GoogleCalendar.ui.daysVerticalListView.DateAdapter;
+import com.example.GoogleCalendar.ui.daysVerticalListView.MyRecyclerView;
 import com.example.GoogleCalendar.ui.dropDownCalendarView.GoogleCalenderView;
 import com.example.GoogleCalendar.ui.fullScreenMonthCalendarView.MonthFragment;
 import com.google.android.material.appbar.AppBarLayout;
@@ -54,12 +56,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity
-        implements MyRecyclerView.AppBarTracking {
+public class MainActivity extends AppCompatActivity implements MyRecyclerView.AppBarTracking {
 
     public static LocalDate lastdate = LocalDate.now();
     public static int topspace = 0;
-    long lasttime;
+    public HashMap<LocalDate, Integer> indextrack;
+    public int expandedfirst;
+    public HashMap<LocalDate, Integer> dupindextrack;
+
+    private long lasttime;
     private MyRecyclerView mNestedView;
     private ViewPager monthviewpager;
     private HashMap<LocalDate, EventDataModel[]> alleventlist;
@@ -74,11 +79,7 @@ public class MainActivity extends AppCompatActivity
     private Toolbar toolbar;
     private boolean isappbarclosed = true;
     private int month;
-    int expandedfirst;
     private GoogleCalenderView calendarView;
-    HashMap<LocalDate, Integer> indextrack;
-    HashMap<LocalDate, Integer> dupindextrack;
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -90,25 +91,16 @@ public class MainActivity extends AppCompatActivity
             final LinearLayoutManager linearLayoutManager = (LinearLayoutManager) mNestedView.getLayoutManager();
             mNestedView.stopScroll();
             if (indextrack.containsKey(new LocalDate(localDate.getYear(), localDate.getMonthOfYear(), localDate.getDayOfMonth()))) {
-
                 final Integer val = indextrack.get(new LocalDate(localDate.getYear(), localDate.getMonthOfYear(), localDate.getDayOfMonth()));
-
                 if (isAppBarExpanded()) {
                     calendarView.setCurrentmonth(new LocalDate());
-                    expandedfirst = val;
-                    topspace = 20;
-                    linearLayoutManager.scrollToPositionWithOffset(val, 20);
-                    EventBus.getDefault().post(new MonthChange(localDate, 0));
-                    month = localDate.getDayOfMonth();
-                    lastdate = localDate;
-                } else {
-                    expandedfirst = val;
-                    topspace = 20;
-                    linearLayoutManager.scrollToPositionWithOffset(val, 20);
-                    EventBus.getDefault().post(new MonthChange(localDate, 0));
-                    month = localDate.getDayOfMonth();
-                    lastdate = localDate;
                 }
+                expandedfirst = val;
+                topspace = 20;
+                linearLayoutManager.scrollToPositionWithOffset(val, 20);
+                EventBus.getDefault().post(new MonthChange(localDate, 0));
+                month = localDate.getDayOfMonth();
+                lastdate = localDate;
             }
 
         } else if (item.getItemId() == R.id.action_refresh) {
@@ -379,46 +371,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * this call when user is scrolling on mNestedView(recyclerview) and month will change
-     * or when toolbar top side current date button selected
-     */
-    @Subscribe
-    public void onEvent(MonthChange event) {
-        Log.e("call", "onEvent(MonthChange event)");
-
-        if (!isAppBarExpanded()) {
-            LocalDate localDate = new LocalDate();
-            String year = event.getMessage().getYear() == localDate.getYear() ? "" : event.getMessage().getYear() + "";
-            monthname.setText(event.getMessage().toString("MMMM") + " " + year);
-
-            long diff = System.currentTimeMillis() - lasttime;
-            boolean check = diff > 600;
-            if (check && event.mdy > 0) {
-                monthname.setTranslationY(35);
-                mArrowImageView.setTranslationY(35);
-                lasttime = System.currentTimeMillis();
-                monthname.animate().translationY(0).setDuration(200).start();
-                mArrowImageView.animate().translationY(0).setDuration(200).start();
-            } else if (check && event.mdy < 0) {
-                monthname.setTranslationY(-35);
-                mArrowImageView.setTranslationY(-35);
-                lasttime = System.currentTimeMillis();
-                monthname.animate().translationY(0).setDuration(200).start();
-                mArrowImageView.animate().translationY(0).setDuration(200).start();
-            }
-        }
-    }
-
-    /**
-     * call when Googlecalendarview is open and tap on any date or scroll viewpager available inside GoogleCalendar
-     */
-    @Subscribe
-    public void onEvent(MessageEvent event) {
-        Log.e("call", "onEvent(MessageEvent event)");
-        ((DateAdapter)mNestedView.getAdapter()).onMessageEventTrigerred(event);
-    }
-
     private int getDeviceHeight() {
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
@@ -452,55 +404,6 @@ public class MainActivity extends AppCompatActivity
             super.onBackPressed();
             finish();
         }
-    }
-
-    /**
-     * call only one time after googlecalendarview init() method is done
-     */
-    @Subscribe
-    public void onEvent(final AddEvent event) {
-        Log.e("call", "onEvent(final AddEvent event)");
-
-        ((DateAdapter)mNestedView.getAdapter()).setDateAdapterItems(event.getArrayList());
-
-        final TypedValue tv = new TypedValue();
-        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-
-            int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
-            int monthheight = getDeviceHeight() - actionBarHeight - getnavigationHeight() - getStatusBarHeight();
-            Log.e("monthheight", monthheight + "");
-            int recyheight = monthheight - getResources().getDimensionPixelSize(R.dimen.monthtopspace);
-            int singleitem = (recyheight - 18) / 6;
-            if (monthviewpager.getVisibility() == View.VISIBLE) {
-                monthviewpager.setAdapter(new MonthPageAdapter(getSupportFragmentManager(), event.getMonthModels(), singleitem));
-                monthviewpager.setCurrentItem(calendarView.calculateCurrentMonth(LocalDate.now()), false);
-            }
-        }
-
-        indextrack = event.getIndextracker();
-        for (Map.Entry<LocalDate, Integer> entry : indextrack.entrySet()) {
-            dupindextrack.put(entry.getKey(), entry.getValue());
-        }
-
-        if (mNestedView.isAttachedToWindow()) {
-            mNestedView.getAdapter().notifyDataSetChanged();
-        }
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                LocalDate localDate = new LocalDate();
-                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) mNestedView.getLayoutManager();
-                if (indextrack.containsKey(LocalDate.now())) {
-                    Integer val = indextrack.get(LocalDate.now());
-                    expandedfirst = val;
-                    topspace = 20;
-                    linearLayoutManager.scrollToPositionWithOffset(expandedfirst, 20);
-                    EventBus.getDefault().post(new MonthChange(localDate, 0));
-                    month = localDate.getDayOfMonth();
-                    lastdate = localDate;
-                }
-            }
-        }, 100);
     }
 
     private void setExpandAndCollapseEnabled(boolean enabled) {
@@ -547,6 +450,95 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean isAppBarIdle() {
         return mAppBarIdle;
+    }
+
+    /**
+     * call when Googlecalendarview is open and tap on any date or scroll viewpager available inside GoogleCalendar
+     */
+    @Subscribe
+    public void onEvent(MessageEvent event) {
+        Log.e("call", "onEvent(MessageEvent event)");
+        ((DateAdapter)mNestedView.getAdapter()).onMessageEventTrigerred(event);
+    }
+
+    /**
+     * this call when user is scrolling on mNestedView(recyclerview) and month will change
+     * or when toolbar top side current date button selected
+     */
+    @Subscribe
+    public void onEvent(MonthChange event) {
+        Log.e("call", "onEvent(MonthChange event)");
+
+        if (!isAppBarExpanded()) {
+            LocalDate localDate = new LocalDate();
+            String year = event.getMessage().getYear() == localDate.getYear() ? "" : event.getMessage().getYear() + "";
+            monthname.setText(event.getMessage().toString("MMMM") + " " + year);
+
+            long diff = System.currentTimeMillis() - lasttime;
+            boolean check = diff > 600;
+            if (check && event.mdy > 0) {
+                monthname.setTranslationY(35);
+                mArrowImageView.setTranslationY(35);
+                lasttime = System.currentTimeMillis();
+                monthname.animate().translationY(0).setDuration(200).start();
+                mArrowImageView.animate().translationY(0).setDuration(200).start();
+            } else if (check && event.mdy < 0) {
+                monthname.setTranslationY(-35);
+                mArrowImageView.setTranslationY(-35);
+                lasttime = System.currentTimeMillis();
+                monthname.animate().translationY(0).setDuration(200).start();
+                mArrowImageView.animate().translationY(0).setDuration(200).start();
+            }
+        }
+    }
+
+    /**
+     * call only after googlecalendarview init() method is done
+     */
+    @Subscribe
+    public void onEvent(final AddEvent event) {
+        Log.e("call", "onEvent(final AddEvent event)");
+
+        ((DateAdapter)mNestedView.getAdapter()).setDateAdapterItems(event.getArrayList());
+
+        final TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+
+            int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+            int monthheight = getDeviceHeight() - actionBarHeight - getnavigationHeight() - getStatusBarHeight();
+            Log.e("monthheight", monthheight + "");
+            int recyheight = monthheight - getResources().getDimensionPixelSize(R.dimen.monthtopspace);
+            int singleitem = (recyheight - 18) / 6;
+            if (monthviewpager.getVisibility() == View.VISIBLE) {
+                monthviewpager.setAdapter(new MonthPageAdapter(getSupportFragmentManager(), event.getMonthModels(), singleitem));
+                monthviewpager.setCurrentItem(calendarView.calculateCurrentMonth(LocalDate.now()), false);
+            }
+        }
+
+        indextrack = event.getIndextracker();
+        for (Map.Entry<LocalDate, Integer> entry : indextrack.entrySet()) {
+            dupindextrack.put(entry.getKey(), entry.getValue());
+        }
+
+        if (mNestedView.isAttachedToWindow()) {
+            mNestedView.getAdapter().notifyDataSetChanged();
+        }
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                LocalDate localDate = new LocalDate();
+                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) mNestedView.getLayoutManager();
+                if (indextrack.containsKey(LocalDate.now())) {
+                    Integer val = indextrack.get(LocalDate.now());
+                    expandedfirst = val;
+                    topspace = 20;
+                    linearLayoutManager.scrollToPositionWithOffset(expandedfirst, 20);
+                    EventBus.getDefault().post(new MonthChange(localDate, 0));
+                    month = localDate.getDayOfMonth();
+                    lastdate = localDate;
+                }
+            }
+        }, 100);
     }
 
     class MonthPageAdapter extends FragmentStatePagerAdapter {

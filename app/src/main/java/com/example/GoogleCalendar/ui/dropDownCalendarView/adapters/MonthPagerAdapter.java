@@ -24,6 +24,11 @@ public class MonthPagerAdapter extends RecyclerView.Adapter<MonthPagerAdapter.Mo
         this.monthModels = data;
     }
 
+    public void updateAdapterData(ArrayList<MonthModel> data) {
+        this.monthModels = data;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public MonthViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

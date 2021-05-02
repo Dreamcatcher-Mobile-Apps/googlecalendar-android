@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar.ui;
+package com.example.GoogleCalendar.ui.daysVerticalListView;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +13,7 @@ import com.example.GoogleCalendar.R;
 import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.models.EventModel;
 import com.example.GoogleCalendar.models.MessageEvent;
+import com.example.GoogleCalendar.ui.MainActivity;
 import com.gjiazhe.scrollparallaximageview.ScrollParallaxImageView;
 import com.gjiazhe.scrollparallaximageview.parallaxstyle.VerticalMovingStyle;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
@@ -50,7 +51,7 @@ public class DateAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
     ArrayList<EventModel> items = new ArrayList<>();
 
-    DateAdapter(MainActivity activity, LinearLayoutManager linearLayoutManager) {
+    public DateAdapter(MainActivity activity, LinearLayoutManager linearLayoutManager) {
         this.activity = activity;
         this.linearLayoutManager = linearLayoutManager;
     }

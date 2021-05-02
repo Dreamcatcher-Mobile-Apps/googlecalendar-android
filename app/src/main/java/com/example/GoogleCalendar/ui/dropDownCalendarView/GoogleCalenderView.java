@@ -177,6 +177,8 @@ public class GoogleCalenderView extends LinearLayout {
 
         if (viewPager.getAdapter() == null) {
             setupViewPagerAdapter(arrayList);
+        } else {
+            updatePagerAdapterData(arrayList);
         }
 
         LocalDate todaydate = LocalDate.now();
@@ -255,6 +257,10 @@ public class GoogleCalenderView extends LinearLayout {
 
             }
         });
+    }
+
+    private void updatePagerAdapterData(ArrayList<MonthModel> data) {
+        ((MonthPagerAdapter)viewPager.getAdapter()).updateAdapterData(data);
     }
 
     public void updategrid() {
