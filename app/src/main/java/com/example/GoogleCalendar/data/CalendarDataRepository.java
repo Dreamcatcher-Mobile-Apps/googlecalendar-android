@@ -63,8 +63,8 @@ public class CalendarDataRepository {
                     for (int i = 0; i < eventsNames.length; i++) {
                         eventsPerThisDate[i] = new EventDataModel(
                                 eventsNames[i],
-                                getDateTime(Long.parseLong(eventsStartDateTimes[i])),
-                                getDateTime(Long.parseLong(eventsEndDateTimes[i]))
+                                getDateTime(eventsStartDateTimes[i]),
+                                getDateTime(eventsEndDateTimes[i])
                         );
                     }
                     localDateHashMap.put(localDate, eventsPerThisDate);
@@ -81,8 +81,8 @@ public class CalendarDataRepository {
                         EventDataModel[] eventsPerThisDateNew = Arrays.copyOf(eventsPerThisDate, eventsPerThisDate.length + 1);
                         EventDataModel newEvent = new EventDataModel(
                                 cursor.getString(1),
-                                getDateTime(Long.parseLong(cursor.getString(3))),
-                                getDateTime(Long.parseLong(cursor.getString(4)))
+                                getDateTime(cursor.getString(3)),
+                                getDateTime(cursor.getString(4))
                         );
                         eventsPerThisDateNew[eventsPerThisDateNew.length - 1] = newEvent;
                         localDateHashMap.put(localDate, eventsPerThisDateNew);
@@ -98,8 +98,14 @@ public class CalendarDataRepository {
         return instantFromEpochMilli.toDateTime(DateTimeZone.getDefault()).toLocalDate();
     }
 
-    private static LocalDateTime getDateTime(long milliSeconds) {
-        Instant instantFromEpochMilli = Instant.ofEpochMilli(milliSeconds);
-        return instantFromEpochMilli.toDateTime(DateTimeZone.getDefault()).toLocalDateTime();
+    private static LocalDateTime getDateTime(String milliSecondsAsString) {
+        if (milliSecondsAsString == null) {
+            return null;
+        }
+        else {
+            long milliSecondsAsLong = Long.parseLong(milliSecondsAsString);
+            Instant instantFromEpochMilli = Instant.ofEpochMilli(milliSecondsAsLong);
+            return instantFromEpochMilli.toDateTime(DateTimeZone.getDefault()).toLocalDateTime();
+        }
     }
 }
