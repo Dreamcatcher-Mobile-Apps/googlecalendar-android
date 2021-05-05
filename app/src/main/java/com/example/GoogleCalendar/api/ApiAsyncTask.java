@@ -1,4 +1,4 @@
-package com.example.GoogleCalendar.data;
+package com.example.GoogleCalendar.api;
 
 import android.os.AsyncTask;
 
@@ -45,7 +45,6 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... params) {
         try {
-//            mActivity.clearResultsText();
             mActivity.updateResultsOnUi(getDataFromApi());
 
         } catch (final GooglePlayServicesAvailabilityIOException availabilityException) {
