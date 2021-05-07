@@ -108,6 +108,9 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
 
+    public static final int YEARS_BACK = 5;
+    public static final int YEARS_FORWARD = 5;
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_favorite) {
@@ -368,8 +371,8 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 200 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            LocalDate mintime = new LocalDate().minusYears(5);
-            LocalDate maxtime = new LocalDate().plusYears(5);
+            LocalDate mintime = new LocalDate().minusYears(YEARS_BACK);
+            LocalDate maxtime = new LocalDate().plusYears(YEARS_FORWARD);
 //            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
 //            calendarView.init(alleventlist, mintime.minusYears(10), maxtime.plusYears(10));
             new Handler().postDelayed(new Runnable() {
@@ -679,8 +682,8 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
             @Override
             public void run() {
                 alleventlist=dataStrings;
-                LocalDate mintime = new LocalDate().minusYears(5);
-                LocalDate maxtime = new LocalDate().plusYears(5);
+                LocalDate mintime = new LocalDate().minusYears(YEARS_BACK);
+                LocalDate maxtime = new LocalDate().plusYears(YEARS_FORWARD);
                 calendarView.init(alleventlist, mintime, maxtime);
 
                 calendarView.setCurrentmonth(new LocalDate());

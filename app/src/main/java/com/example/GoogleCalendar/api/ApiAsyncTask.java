@@ -64,15 +64,15 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
     }
 
     /**
-     * Fetch a list of the next 10 events from the primary calendar.
+     * Fetch a list of the events from the primary calendar.
      * @return List of Strings describing returned events.
      * @throws IOException
      */
     private HashMap<LocalDate, EventDataModel[]> getDataFromApi() throws IOException {
-        LocalDate ld= new LocalDate().minusYears(2);
-        Date now =ld.toDateTimeAtCurrentTime().toDate();
-        LocalDate md= new LocalDate().plusYears(2);
-        Date then =md.toDateTimeAtCurrentTime().toDate();
+        LocalDate ld = new LocalDate().minusYears(MainActivity.YEARS_BACK);
+        Date now = ld.toDateTimeAtCurrentTime().toDate();
+        LocalDate md = new LocalDate().plusYears(MainActivity.YEARS_FORWARD);
+        Date then = md.toDateTimeAtCurrentTime().toDate();
         Events events = mActivity.mService.events().list("primary")
 //                .setMaxResults(20)
                 .setTimeMin(new DateTime(now))
@@ -90,10 +90,11 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
                 // All-day events don't have start times, so just use
                 // the start date.
                 start = event.getStart().getDate();
-            }if (end == null) {
+            }
+            if (end == null) {
                 // All-day events don't have end times, so just use
                 // the end date.
-                start = event.getEnd().getDate();
+                end = event.getEnd().getDate();
             }
             if (start!=null && end!=null) {
                 LocalDate localDate = getDate(start.getValue());
