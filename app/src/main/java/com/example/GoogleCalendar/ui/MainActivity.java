@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -37,6 +36,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.example.GoogleCalendar.R;
 import com.example.GoogleCalendar.api.CalendarApiAsyncCall;
+import com.example.GoogleCalendar.common.DeviceStateUtils;
 import com.example.GoogleCalendar.common.MyAppBarBehavior;
 import com.example.GoogleCalendar.interfaces.CalendarApiAsyncCallCallback;
 import com.example.GoogleCalendar.interfaces.MonthChangeListener;
@@ -592,46 +592,57 @@ public class MainActivity extends AppCompatActivity
      *     activity result.
      */
     @Override
-    protected void onActivityResult(
-            int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
-                if (resultCode == RESULT_OK) {
-                    refreshResults();
-                } else {
-                    isGooglePlayServicesAvailable();
-                }
+                onActivityResults_requestGooglePlayServices(resultCode);
                 break;
             case REQUEST_ACCOUNT_PICKER:
-                if (resultCode == RESULT_OK && data != null &&
-                        data.getExtras() != null) {
-                    String accountName =
-                            data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    if (accountName != null) {
-                        googleAccountCredentials.setSelectedAccountName(accountName);
-                        SharedPreferences settings =
-                                getPreferences(Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = settings.edit();
-                        editor.putString(PREF_ACCOUNT_NAME, accountName);
-                        editor.commit();
-                        refreshResults();
-                    }
-                } else if (resultCode == RESULT_CANCELED) {
-                    String message = getString(R.string.account_not_specified);
-                    displayStatusAsToastMessage(message);
-                }
+                onActivityResults_requestAccountPicker(resultCode, data);
                 break;
             case REQUEST_AUTHORIZATION:
-                if (resultCode == RESULT_OK) {
-                    refreshResults();
-                } else {
-                    chooseAccount();
-                }
+                onActivityResults_requestAuthorization(resultCode);
                 break;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void onActivityResults_requestGooglePlayServices(int resultCode) {
+        if (resultCode == RESULT_OK) {
+            refreshResults();
+        } else {
+            isGooglePlayServicesAvailable();
+        }
+    }
+
+    private void onActivityResults_requestAccountPicker(int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && data != null &&
+                data.getExtras() != null) {
+            String accountName =
+                    data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+            if (accountName != null) {
+                googleAccountCredentials.setSelectedAccountName(accountName);
+                SharedPreferences settings =
+                        getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString(PREF_ACCOUNT_NAME, accountName);
+                editor.commit();
+                refreshResults();
+            }
+        } else if (resultCode == RESULT_CANCELED) {
+            String message = getString(R.string.account_not_specified);
+            displayStatusAsToastMessage(message);
+        }
+    }
+
+    private void onActivityResults_requestAuthorization(int resultCode) {
+        if (resultCode == RESULT_OK) {
+            refreshResults();
+        } else {
+            chooseAccount();
+        }
     }
 
     /**
@@ -643,7 +654,8 @@ public class MainActivity extends AppCompatActivity
         if (googleAccountCredentials.getSelectedAccountName() == null) {
             chooseAccount();
         } else {
-            if (isDeviceOnline()) {
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (DeviceStateUtils.isDeviceOnline(connectivityManager)) {
                 new CalendarApiAsyncCall(calendarService, this).execute();
             } else {
                 String message = getString(R.string.no_network_connection_available);
@@ -651,7 +663,6 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
-
 
     /**
      * Update the UI with the given List of Strings; called from background threads and async tasks,
@@ -696,17 +707,6 @@ public class MainActivity extends AppCompatActivity
     private void chooseAccount() {
         startActivityForResult(
                 googleAccountCredentials.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
-    }
-
-    /**
-     * Checks whether the device currently has a network connection.
-     * @return true if the device has a network connection, false otherwise.
-     */
-    private boolean isDeviceOnline() {
-        ConnectivityManager connMgr =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected());
     }
 
     /**
