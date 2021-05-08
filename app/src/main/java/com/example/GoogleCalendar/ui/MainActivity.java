@@ -36,8 +36,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.GoogleCalendar.R;
-import com.example.GoogleCalendar.api.ApiAsyncTask;
+import com.example.GoogleCalendar.api.CalendarApiAsyncCall;
 import com.example.GoogleCalendar.common.MyAppBarBehavior;
+import com.example.GoogleCalendar.interfaces.CalendarApiAsyncCallCallback;
 import com.example.GoogleCalendar.interfaces.MonthChangeListener;
 import com.example.GoogleCalendar.models.AddEvent;
 import com.example.GoogleCalendar.models.EventDataModel;
@@ -57,6 +58,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
@@ -69,7 +71,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements MyRecyclerView.AppBarTracking {
+public class MainActivity extends AppCompatActivity
+        implements MyRecyclerView.AppBarTracking, CalendarApiAsyncCallCallback {
 
     public static LocalDate lastdate = LocalDate.now();
     public static int topspace = 0;
@@ -98,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     public static final int YEARS_FORWARD = 5;
 
     // Elements related to the Google Calendar API access
-    public com.google.api.services.calendar.Calendar calendarService;
+    public Calendar calendarService;
     GoogleAccountCredential googleAccountCredentials;
     final HttpTransport transport = AndroidHttp.newCompatibleTransport();
     final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -641,7 +644,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
             chooseAccount();
         } else {
             if (isDeviceOnline()) {
-                new ApiAsyncTask(this).execute();
+                new CalendarApiAsyncCall(calendarService, this).execute();
             } else {
                 String message = getString(R.string.no_network_connection_available);
                 displayStatusAsToastMessage(message);
@@ -743,6 +746,30 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
                 dialog.show();
             }
         });
+    }
+
+    /**
+     *  Methods of the Calendar Api Acync Call Callback.
+     */
+
+    @Override
+    public void calendarDataFetchedSuccessfully(HashMap<LocalDate, EventDataModel[]> calendarEventsData) {
+        updateResultsOnUi(calendarEventsData);
+    }
+
+    @Override
+    public void googlePlayServicesAvailabilityError(int connectionStatusCode) {
+        showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
+    }
+
+    @Override
+    public void userRecoverableException(Intent exceptionIntent) {
+        this.startActivityForResult(exceptionIntent, REQUEST_AUTHORIZATION);
+    }
+
+    @Override
+    public void unknownError(String errorMessage) {
+        displayStatusAsToastMessage(getString(R.string.the_following_error_occurred, errorMessage));
     }
 
 }

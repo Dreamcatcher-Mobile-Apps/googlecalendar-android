@@ -2,12 +2,13 @@ package com.example.GoogleCalendar.api;
 
 import android.os.AsyncTask;
 
-import com.example.GoogleCalendar.R;
+import com.example.GoogleCalendar.interfaces.CalendarApiAsyncCallCallback;
 import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.ui.MainActivity;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.util.DateTime;
+import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
 
@@ -26,17 +27,13 @@ import java.util.List;
  * An asynchronous task that handles the Google Calendar API call.
  * Placing the API calls in their own task ensures the UI stays responsive.
  */
+public class CalendarApiAsyncCall extends AsyncTask<Void, Void, Void> {
+    private Calendar googleCalendarService;
+    private CalendarApiAsyncCallCallback callback;
 
-
-public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
-    private MainActivity mActivity;
-
-    /**
-     * Constructor.
-     * @param activity MainActivity that spawned this task.
-     */
-    public ApiAsyncTask(MainActivity activity) {
-        this.mActivity = activity;
+    public CalendarApiAsyncCall(Calendar googleCalendarService, CalendarApiAsyncCallCallback callback) {
+        this.googleCalendarService = googleCalendarService;
+        this.callback = callback;
     }
 
     /**
@@ -46,19 +43,14 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... params) {
         try {
-            mActivity.updateResultsOnUi(getDataFromApi());
+            callback.calendarDataFetchedSuccessfully(getDataFromApi());
 
         } catch (final GooglePlayServicesAvailabilityIOException availabilityException) {
-            mActivity.showGooglePlayServicesAvailabilityErrorDialog(
-                    availabilityException.getConnectionStatusCode());
-
+            callback.googlePlayServicesAvailabilityError(availabilityException.getConnectionStatusCode());
         } catch (UserRecoverableAuthIOException userRecoverableException) {
-            mActivity.startActivityForResult(
-                    userRecoverableException.getIntent(),
-                    MainActivity.REQUEST_AUTHORIZATION);
-
-        } catch (IOException e) {
-            mActivity.displayStatusAsToastMessage(mActivity.getString(R.string.the_following_error_occurred, e.getMessage()));
+            callback.userRecoverableException(userRecoverableException.getIntent());
+        } catch (Exception e) {
+            callback.unknownError(e.getLocalizedMessage());
         }
         return null;
     }
@@ -73,7 +65,7 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
         Date now = ld.toDateTimeAtCurrentTime().toDate();
         LocalDate md = new LocalDate().plusYears(MainActivity.YEARS_FORWARD);
         Date then = md.toDateTimeAtCurrentTime().toDate();
-        Events events = mActivity.calendarService.events().list("primary")
+        Events events = googleCalendarService.events().list("primary")
 //                .setMaxResults(20)
                 .setTimeMin(new DateTime(now))
                 .setTimeMax(new DateTime(then))
