@@ -2,6 +2,7 @@ package com.example.GoogleCalendar.api;
 
 import android.os.AsyncTask;
 
+import com.example.GoogleCalendar.R;
 import com.example.GoogleCalendar.models.EventDataModel;
 import com.example.GoogleCalendar.ui.MainActivity;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
@@ -57,8 +58,7 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
                     MainActivity.REQUEST_AUTHORIZATION);
 
         } catch (IOException e) {
-            mActivity.updateStatus("The following error occurred: " +
-                    e.getMessage());
+            mActivity.displayStatusAsToastMessage(mActivity.getString(R.string.the_following_error_occurred, e.getMessage()));
         }
         return null;
     }
@@ -73,7 +73,7 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
         Date now = ld.toDateTimeAtCurrentTime().toDate();
         LocalDate md = new LocalDate().plusYears(MainActivity.YEARS_FORWARD);
         Date then = md.toDateTimeAtCurrentTime().toDate();
-        Events events = mActivity.mService.events().list("primary")
+        Events events = mActivity.calendarService.events().list("primary")
 //                .setMaxResults(20)
                 .setTimeMin(new DateTime(now))
                 .setTimeMax(new DateTime(then))

@@ -5,7 +5,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
@@ -24,7 +23,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -38,8 +36,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.GoogleCalendar.R;
-import com.example.GoogleCalendar.common.MyAppBarBehavior;
 import com.example.GoogleCalendar.api.ApiAsyncTask;
+import com.example.GoogleCalendar.common.MyAppBarBehavior;
 import com.example.GoogleCalendar.interfaces.MonthChangeListener;
 import com.example.GoogleCalendar.models.AddEvent;
 import com.example.GoogleCalendar.models.EventDataModel;
@@ -96,20 +94,19 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     private int month;
     private GoogleCalenderView calendarView;
 
-    public com.google.api.services.calendar.Calendar mService;
+    public static final int YEARS_BACK = 5;
+    public static final int YEARS_FORWARD = 5;
 
-    GoogleAccountCredential credential;
+    // Elements related to the Google Calendar API access
+    public com.google.api.services.calendar.Calendar calendarService;
+    GoogleAccountCredential googleAccountCredentials;
     final HttpTransport transport = AndroidHttp.newCompatibleTransport();
     final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     public static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
-
-    public static final int YEARS_BACK = 5;
-    public static final int YEARS_FORWARD = 5;
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -162,19 +159,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Initialize credentials and service object.
-        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
-        credential = GoogleAccountCredential.usingOAuth2(
-                getApplicationContext(), Arrays.asList(SCOPES))
-                .setBackOff(new ExponentialBackOff())
-                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
-
-        mService = new com.google.api.services.calendar.Calendar.Builder(
-                transport, jsonFactory, credential)
-                .setApplicationName(getString(R.string.app_name))
-                .build();
-
+        initializeGoogleCalendarApiTools();
         indextrack = new HashMap<>();
         dupindextrack = new HashMap<>();
         mAppBar = findViewById(R.id.app_bar);
@@ -367,25 +352,17 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
         return true;
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 200 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            LocalDate mintime = new LocalDate().minusYears(YEARS_BACK);
-            LocalDate maxtime = new LocalDate().plusYears(YEARS_FORWARD);
-//            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-//            calendarView.init(alleventlist, mintime.minusYears(10), maxtime.plusYears(10));
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    lastdate = new LocalDate();
-                    calendarView.setCurrentmonth(new LocalDate());
-                    calendarView.adjustheight();
-                    mIsExpanded = false;
-                    mAppBar.setExpanded(false, false);
-                }
-            }, 10);
-        }
+    private void initializeGoogleCalendarApiTools() {
+        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
+        googleAccountCredentials = GoogleAccountCredential.usingOAuth2(
+                getApplicationContext(), Arrays.asList(SCOPES))
+                .setBackOff(new ExponentialBackOff())
+                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+
+        calendarService = new com.google.api.services.calendar.Calendar.Builder(
+                transport, jsonFactory, googleAccountCredentials)
+                .setApplicationName(getString(R.string.app_name))
+                .build();
     }
 
     private int getDeviceHeight() {
@@ -596,8 +573,8 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
         if (isGooglePlayServicesAvailable()) {
             refreshResults();
         } else {
-            Toast.makeText(this,"Google Play Services required: " +
-                    "after installing, close and relaunch this app.",Toast.LENGTH_LONG).show();
+            String message = getString(R.string.google_play_services_required);
+            displayStatusAsToastMessage(message);
         }
     }
 
@@ -629,7 +606,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
                     String accountName =
                             data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                     if (accountName != null) {
-                        credential.setSelectedAccountName(accountName);
+                        googleAccountCredentials.setSelectedAccountName(accountName);
                         SharedPreferences settings =
                                 getPreferences(Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = settings.edit();
@@ -638,7 +615,8 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
                         refreshResults();
                     }
                 } else if (resultCode == RESULT_CANCELED) {
-                    Toast.makeText(this,"Account unspecified.",Toast.LENGTH_LONG).show();
+                    String message = getString(R.string.account_not_specified);
+                    displayStatusAsToastMessage(message);
                 }
                 break;
             case REQUEST_AUTHORIZATION:
@@ -659,23 +637,23 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
      * user can pick an account.
      */
     private void refreshResults() {
-        if (credential.getSelectedAccountName() == null) {
+        if (googleAccountCredentials.getSelectedAccountName() == null) {
             chooseAccount();
         } else {
             if (isDeviceOnline()) {
                 new ApiAsyncTask(this).execute();
             } else {
-                Toast.makeText(this,"No network connection available.",Toast.LENGTH_LONG).show();
+                String message = getString(R.string.no_network_connection_available);
+                displayStatusAsToastMessage(message);
             }
         }
     }
 
 
     /**
-     * Fill the data TextView with the given List of Strings; called from
-     * background threads and async tasks that need to update the UI (in the
-     * UI thread).
-     * @param dataStrings a List of Strings to populate the main TextView with.
+     * Update the UI with the given List of Strings; called from background threads and async tasks,
+     * so we need to ensure it's gonna be run on the UI thread.
+     * @param dataStrings a List of Strings to populate the UI.
      */
     public void updateResultsOnUi(final HashMap<LocalDate, EventDataModel[]> dataStrings) {
         runOnUiThread(new Runnable() {
@@ -697,13 +675,13 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     /**
      * Show a status message; called from background
      * threads and async tasks that need to update the UI (in the UI thread).
-     * @param message a String to display in the UI header TextView.
+     * @param message a String to be displayed in the UI.
      */
-    public void updateStatus(final String message) {
+    public void displayStatusAsToastMessage(final String message) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this,message,Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -714,7 +692,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
      */
     private void chooseAccount() {
         startActivityForResult(
-                credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+                googleAccountCredentials.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
     }
 
     /**
