@@ -62,14 +62,14 @@ public class CalendarApiAsyncCall extends AsyncTask<Void, Void, Void> {
      * @throws IOException
      */
     private HashMap<LocalDate, EventDataModel[]> getDataFromApi() throws IOException {
-        LocalDate ld = new LocalDate().minusYears(MainActivity.YEARS_BACK);
-        Date now = ld.toDateTimeAtCurrentTime().toDate();
-        LocalDate md = new LocalDate().plusYears(MainActivity.YEARS_FORWARD);
-        Date then = md.toDateTimeAtCurrentTime().toDate();
+        LocalDate pastEdgeLocalDate = new LocalDate().minusYears(MainActivity.YEARS_BACK);
+        Date pastEdgeDate = pastEdgeLocalDate.toDateTimeAtCurrentTime().toDate();
+        LocalDate futureEdgeLocalDate = new LocalDate().plusYears(MainActivity.YEARS_FORWARD);
+        Date futureEdgeDate = futureEdgeLocalDate.toDateTimeAtCurrentTime().toDate();
         Events events = googleCalendarService.events().list("primary")
 //                .setMaxResults(20)
-                .setTimeMin(new DateTime(now))
-                .setTimeMax(new DateTime(then))
+                .setTimeMin(new DateTime(pastEdgeDate))
+                .setTimeMax(new DateTime(futureEdgeDate))
                 .setOrderBy("updated")
 //                .setSingleEvents(true)
                 .execute();
