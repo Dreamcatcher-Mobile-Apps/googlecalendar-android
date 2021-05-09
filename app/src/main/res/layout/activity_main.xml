@@ -8,8 +8,6 @@
     android:layout_height="match_parent"
     tools:context=".ui.MainActivity">
 
-
-
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
@@ -135,6 +133,19 @@
         android:id="@+id/redlay"
         android:translationZ="@dimen/tendp"
         android:background="@android:color/white" />
+
+    <RelativeLayout
+        android:id="@+id/progress_bar"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"/>
+
+    </RelativeLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

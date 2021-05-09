@@ -13,4 +13,5 @@ public interface CalendarApiAsyncCallCallback {
     void googlePlayServicesAvailabilityError(int connectionStatusCode);
     void userRecoverableException(Intent exceptionIntent);
     void unknownError(String errorMessage);
+    void dataFetchingFinished();
 }

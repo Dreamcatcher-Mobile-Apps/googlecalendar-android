@@ -52,6 +52,7 @@ public class CalendarApiAsyncCall extends AsyncTask<Void, Void, Void> {
         } catch (Exception e) {
             callback.unknownError(e.getLocalizedMessage());
         }
+        callback.dataFetchingFinished();
         return null;
     }
 

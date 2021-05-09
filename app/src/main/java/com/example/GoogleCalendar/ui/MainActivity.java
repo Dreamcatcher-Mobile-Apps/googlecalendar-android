@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -96,6 +97,7 @@ public class MainActivity extends AppCompatActivity
     private boolean isappbarclosed = true;
     private int month;
     private GoogleCalenderView calendarView;
+    private RelativeLayout progressBar;
 
     public static final int YEARS_BACK = 5;
     public static final int YEARS_FORWARD = 5;
@@ -173,6 +175,7 @@ public class MainActivity extends AppCompatActivity
         calendarView.setPadding(0, getStatusBarHeight(), 0, 0);
         mNestedView = findViewById(R.id.nestedView);
         monthviewpager = findViewById(R.id.monthviewpager);
+        progressBar = findViewById(R.id.progress_bar);
 
         monthviewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -379,6 +382,19 @@ public class MainActivity extends AppCompatActivity
         int height = displayMetrics.heightPixels;
         Log.e("dd", height1 + "=" + height);
         return height1;
+    }
+
+    private void setProgressBarCircleVisibility(final Boolean visible) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (visible) {
+                    progressBar.setVisibility(View.VISIBLE);
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     @Override
@@ -657,6 +673,7 @@ public class MainActivity extends AppCompatActivity
             ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             if (DeviceStateUtils.isDeviceOnline(connectivityManager)) {
                 new CalendarApiAsyncCall(calendarService, this).execute();
+                setProgressBarCircleVisibility(true);
             } else {
                 String message = getString(R.string.no_network_connection_available);
                 displayStatusAsToastMessage(message);
@@ -770,6 +787,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void unknownError(String errorMessage) {
         displayStatusAsToastMessage(getString(R.string.the_following_error_occurred, errorMessage));
+    }
+
+    @Override
+    public void dataFetchingFinished() {
+        setProgressBarCircleVisibility(false);
     }
 
 }
