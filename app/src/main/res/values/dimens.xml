@@ -7,4 +7,5 @@
 
     <dimen name="tendp">20dp</dimen>
     <dimen name="monthtopspace">17dp</dimen>
+    <dimen name="translation_z_to_be_always_on_top">100dp</dimen>
 </resources>

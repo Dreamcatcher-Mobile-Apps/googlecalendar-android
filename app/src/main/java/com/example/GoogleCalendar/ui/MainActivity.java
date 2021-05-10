@@ -1,10 +1,13 @@
 package com.example.GoogleCalendar.ui;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.accounts.AccountManager;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Point;
-import android.os.Build;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -16,14 +19,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.app.ActivityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -33,8 +36,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.GoogleCalendar.R;
+import com.example.GoogleCalendar.api.CalendarApiAsyncCall;
+import com.example.GoogleCalendar.common.DeviceStateUtils;
 import com.example.GoogleCalendar.common.MyAppBarBehavior;
-import com.example.GoogleCalendar.data.CalendarDataRepository;
+import com.example.GoogleCalendar.interfaces.CalendarApiAsyncCallCallback;
 import com.example.GoogleCalendar.interfaces.MonthChangeListener;
 import com.example.GoogleCalendar.models.AddEvent;
 import com.example.GoogleCalendar.models.EventDataModel;
@@ -45,7 +50,17 @@ import com.example.GoogleCalendar.ui.daysVerticalListView.DateAdapter;
 import com.example.GoogleCalendar.ui.daysVerticalListView.MyRecyclerView;
 import com.example.GoogleCalendar.ui.dropDownCalendarView.GoogleCalenderView;
 import com.example.GoogleCalendar.ui.fullScreenMonthCalendarView.MonthFragment;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.CalendarScopes;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
 import org.greenrobot.eventbus.EventBus;
@@ -53,10 +68,12 @@ import org.greenrobot.eventbus.Subscribe;
 import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements MyRecyclerView.AppBarTracking {
+public class MainActivity extends AppCompatActivity
+        implements MyRecyclerView.AppBarTracking, CalendarApiAsyncCallCallback {
 
     public static LocalDate lastdate = LocalDate.now();
     public static int topspace = 0;
@@ -80,6 +97,21 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     private boolean isappbarclosed = true;
     private int month;
     private GoogleCalenderView calendarView;
+    private RelativeLayout progressBar;
+
+    public static final int YEARS_BACK = 5;
+    public static final int YEARS_FORWARD = 5;
+
+    // Elements related to the Google Calendar API access
+    public Calendar calendarService;
+    GoogleAccountCredential googleAccountCredentials;
+    final HttpTransport transport = AndroidHttp.newCompatibleTransport();
+    final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+    static final int REQUEST_ACCOUNT_PICKER = 1000;
+    public static final int REQUEST_AUTHORIZATION = 1001;
+    static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
+    private static final String PREF_ACCOUNT_NAME = "accountName";
+    private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -104,10 +136,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
             }
 
         } else if (item.getItemId() == R.id.action_refresh) {
-            LocalDate mintime = new LocalDate().minusYears(5);
-            LocalDate maxtime = new LocalDate().plusYears(5);
-            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            calendarView.init(alleventlist, mintime, maxtime);
+           refreshResults();
         }
 
         return super.onOptionsItemSelected(item);
@@ -135,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        initializeGoogleCalendarApiTools();
         indextrack = new HashMap<>();
         dupindextrack = new HashMap<>();
         mAppBar = findViewById(R.id.app_bar);
@@ -146,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
         calendarView.setPadding(0, getStatusBarHeight(), 0, 0);
         mNestedView = findViewById(R.id.nestedView);
         monthviewpager = findViewById(R.id.monthviewpager);
+        progressBar = findViewById(R.id.progress_bar);
 
         monthviewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -194,28 +224,6 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
                 monthname.setText(monthModel.getMonthnamestr() + " " + year);
             }
         });
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.READ_CALENDAR}, 200);
-            }
-        } else {
-            LocalDate mintime = new LocalDate().minusYears(5);
-            LocalDate maxtime = new LocalDate().plusYears(5);
-            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            calendarView.init(alleventlist, mintime, maxtime);
-            calendarView.setCurrentmonth(new LocalDate());
-            calendarView.adjustheight();
-            mIsExpanded = false;
-            mAppBar.setExpanded(false, false);
-
-        }
         toolbar = findViewById(R.id.toolbar);
         toolbar.setPadding(0, getStatusBarHeight(), 0, 0);
 
@@ -350,25 +358,17 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
         return true;
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 200 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            LocalDate mintime = new LocalDate().minusYears(5);
-            LocalDate maxtime = new LocalDate().plusYears(5);
-            alleventlist = CalendarDataRepository.readCalendarEventsData(this, mintime, maxtime);
-            calendarView.init(alleventlist, mintime.minusYears(10), maxtime.plusYears(10));
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    lastdate = new LocalDate();
-                    calendarView.setCurrentmonth(new LocalDate());
-                    calendarView.adjustheight();
-                    mIsExpanded = false;
-                    mAppBar.setExpanded(false, false);
-                }
-            }, 10);
-        }
+    private void initializeGoogleCalendarApiTools() {
+        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
+        googleAccountCredentials = GoogleAccountCredential.usingOAuth2(
+                getApplicationContext(), Arrays.asList(SCOPES))
+                .setBackOff(new ExponentialBackOff())
+                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+
+        calendarService = new com.google.api.services.calendar.Calendar.Builder(
+                transport, jsonFactory, googleAccountCredentials)
+                .setApplicationName(getString(R.string.app_name))
+                .build();
     }
 
     private int getDeviceHeight() {
@@ -382,6 +382,19 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
         int height = displayMetrics.heightPixels;
         Log.e("dd", height1 + "=" + height);
         return height1;
+    }
+
+    private void setProgressBarCircleVisibility(final Boolean visible) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (visible) {
+                    progressBar.setVisibility(View.VISIBLE);
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     @Override
@@ -567,4 +580,218 @@ public class MainActivity extends AppCompatActivity implements MyRecyclerView.Ap
             return MonthFragment.newInstance(monthModels.get(position).getMonth(), monthModels.get(position).getYear(), monthModels.get(position).getFirstday(), monthModels.get(position).getDayModelArrayList(), alleventlist, singleitemheight);
         }
     }
+
+
+    /**
+     * Called whenever this activity is pushed to the foreground, such as after
+     * a call to onCreate().
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isGooglePlayServicesAvailable()) {
+            refreshResults();
+        } else {
+            String message = getString(R.string.google_play_services_required);
+            displayStatusAsToastMessage(message);
+        }
+    }
+
+    /**
+     * Called when an activity launched here (specifically, AccountPicker
+     * and authorization) exits, giving you the requestCode you started it with,
+     * the resultCode it returned, and any additional data from it.
+     * @param requestCode code indicating which activity result is incoming.
+     * @param resultCode code indicating the result of the incoming
+     *     activity result.
+     * @param data Intent (containing result data) returned by incoming
+     *     activity result.
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch(requestCode) {
+            case REQUEST_GOOGLE_PLAY_SERVICES:
+                onActivityResults_requestGooglePlayServices(resultCode);
+                break;
+            case REQUEST_ACCOUNT_PICKER:
+                onActivityResults_requestAccountPicker(resultCode, data);
+                break;
+            case REQUEST_AUTHORIZATION:
+                onActivityResults_requestAuthorization(resultCode);
+                break;
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void onActivityResults_requestGooglePlayServices(int resultCode) {
+        if (resultCode == RESULT_OK) {
+            refreshResults();
+        } else {
+            isGooglePlayServicesAvailable();
+        }
+    }
+
+    private void onActivityResults_requestAccountPicker(int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && data != null &&
+                data.getExtras() != null) {
+            String accountName =
+                    data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+            if (accountName != null) {
+                googleAccountCredentials.setSelectedAccountName(accountName);
+                SharedPreferences settings =
+                        getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString(PREF_ACCOUNT_NAME, accountName);
+                editor.commit();
+                refreshResults();
+            }
+        } else if (resultCode == RESULT_CANCELED) {
+            String message = getString(R.string.account_not_specified);
+            displayStatusAsToastMessage(message);
+        }
+    }
+
+    private void onActivityResults_requestAuthorization(int resultCode) {
+        if (resultCode == RESULT_OK) {
+            refreshResults();
+        } else {
+            chooseAccount();
+        }
+    }
+
+    /**
+     * Attempt to get a set of data from the Google Calendar API to display. If the
+     * email address isn't known yet, then call chooseAccount() method so the
+     * user can pick an account.
+     */
+    private void refreshResults() {
+        if (googleAccountCredentials.getSelectedAccountName() == null) {
+            chooseAccount();
+        } else {
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (DeviceStateUtils.isDeviceOnline(connectivityManager)) {
+                new CalendarApiAsyncCall(calendarService, this).execute();
+                setProgressBarCircleVisibility(true);
+            } else {
+                String message = getString(R.string.no_network_connection_available);
+                displayStatusAsToastMessage(message);
+            }
+        }
+    }
+
+    /**
+     * Update the UI with the given List of Strings; called from background threads and async tasks,
+     * so we need to ensure it's gonna be run on the UI thread.
+     * @param dataStrings a List of Strings to populate the UI.
+     */
+    public void updateResultsOnUi(final HashMap<LocalDate, EventDataModel[]> dataStrings) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                alleventlist=dataStrings;
+                LocalDate mintime = new LocalDate().minusYears(YEARS_BACK);
+                LocalDate maxtime = new LocalDate().plusYears(YEARS_FORWARD);
+                calendarView.init(alleventlist, mintime, maxtime);
+
+                calendarView.setCurrentmonth(new LocalDate());
+                calendarView.adjustheight();
+                mIsExpanded = false;
+                mAppBar.setExpanded(false, false);
+            }
+        });
+    }
+
+    /**
+     * Show a status message; called from background
+     * threads and async tasks that need to update the UI (in the UI thread).
+     * @param message a String to be displayed in the UI.
+     */
+    public void displayStatusAsToastMessage(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    /**
+     * Starts an activity in Google Play Services so the user can pick an
+     * account.
+     */
+    private void chooseAccount() {
+        startActivityForResult(
+                googleAccountCredentials.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+    }
+
+    /**
+     * Check that Google Play services APK is installed and up to date. Will
+     * launch an error dialog for the user to update Google Play Services if
+     * possible.
+     * @return true if Google Play Services is available and up to
+     *     date on this device; false otherwise.
+     */
+    private boolean isGooglePlayServicesAvailable() {
+        final int connectionStatusCode =
+                GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if (GooglePlayServicesUtil.isUserRecoverableError(connectionStatusCode)) {
+            showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
+            return false;
+        } else if (connectionStatusCode != ConnectionResult.SUCCESS ) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Display an error dialog showing that Google Play Services is missing
+     * or out of date.
+     * @param connectionStatusCode code describing the presence (or lack of)
+     *     Google Play Services on this device.
+     */
+    public void showGooglePlayServicesAvailabilityErrorDialog(
+            final int connectionStatusCode) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Dialog dialog = GooglePlayServicesUtil.getErrorDialog(
+                        connectionStatusCode,
+                        MainActivity.this,
+                        REQUEST_GOOGLE_PLAY_SERVICES);
+                dialog.show();
+            }
+        });
+    }
+
+    /**
+     *  Methods of the Calendar Api Acync Call Callback.
+     */
+
+    @Override
+    public void calendarDataFetchedSuccessfully(HashMap<LocalDate, EventDataModel[]> calendarEventsData) {
+        updateResultsOnUi(calendarEventsData);
+    }
+
+    @Override
+    public void googlePlayServicesAvailabilityError(int connectionStatusCode) {
+        showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
+    }
+
+    @Override
+    public void userRecoverableException(Intent exceptionIntent) {
+        this.startActivityForResult(exceptionIntent, REQUEST_AUTHORIZATION);
+    }
+
+    @Override
+    public void unknownError(String errorMessage) {
+        displayStatusAsToastMessage(getString(R.string.the_following_error_occurred, errorMessage));
+    }
+
+    @Override
+    public void dataFetchingFinished() {
+        setProgressBarCircleVisibility(false);
+    }
+
 }
